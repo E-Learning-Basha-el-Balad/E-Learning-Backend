@@ -22,6 +22,87 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+
+### Backend Folder Structure for E-Learning Platform
+
+```
+backend/
+├── src/                        # Source code of the application
+│   ├── app.module.ts           # Root module of the NestJS application
+│   ├── main.ts                 # Entry point of the application
+│   ├── auth/                   # Authentication module
+│   │   ├── auth.controller.ts  # Controller for handling authentication routes
+│   │   ├── auth.service.ts     # Service for authentication logic
+│   │   ├── jwt.strategy.ts     # JWT strategy for authentication
+│   │   └── local.strategy.ts   # Local strategy for login
+│   ├── users/                  # User management module
+│   │   ├── user.controller.ts  # Controller for user-related routes
+│   │   ├── user.service.ts     # Service for user logic
+│   │   ├── user.schema.ts      # Mongoose schema for users
+│   │   └── dto/                # Data transfer objects for user operations
+│   ├── courses/                # Course management module
+│   │   ├── course.controller.ts# Controller for course-related routes
+│   │   ├── course.service.ts   # Service for course logic
+│   │   ├── course.schema.ts    # Mongoose schema for courses
+│   │   └── dto/                # Data transfer objects for course operations
+│   ├── quizzes/                # Adaptive quizzes module
+│   │   ├── quiz.controller.ts  # Controller for quiz-related routes
+│   │   ├── quiz.service.ts     # Service for quiz logic
+│   │   └── quiz.schema.ts      # Mongoose schema for quizzes
+│   ├── performance/            # Performance tracking module
+│   │   ├── performance.controller.ts # Controller for performance tracking
+│   │   ├── performance.service.ts    # Service for performance logic
+│   │   └── performance.schema.ts     # Mongoose schema for performance data
+│   ├── chat/                   # Real-time chat module
+│   │   ├── chat.gateway.ts     # WebSocket gateway for chat
+│   │   └── chat.service.ts     # Service for managing chat functionality
+│   ├── notifications/          # Notifications module
+│   │   ├── notifications.controller.ts # Controller for notifications
+│   │   └── notifications.service.ts    # Service for notification logic
+│   ├── admin/                  # Admin module for platform management
+│   │   ├── admin.controller.ts # Controller for admin-related routes
+│   │   ├── admin.service.ts    # Service for admin logic
+│   │   └── admin.schema.ts     # Mongoose schema for admin data
+│   ├── config/                 # Configuration files
+│   │   ├── database.config.ts  # Database configuration
+│   │   └── jwt.config.ts       # JWT configuration
+│   ├── common/                 # Shared utilities and helpers
+│   │   ├── decorators/         # Custom decorators for code reuse
+│   │   ├── filters/            # Exception filters for error handling
+│   │   ├── guards/             # Guards for role-based access control
+│   │   ├── interceptors/       # Interceptors for logging or transforming requests
+│   │   └── pipes/              # Pipes for data validation and transformation
+│   └── environment/            # Environment-specific configurations
+│       ├── development.env     # Development environment variables
+│       └── production.env      # Production environment variables
+├── test/                       # Tests for the application
+│   ├── auth.e2e-spec.ts        # End-to-end tests for authentication
+│   └── user.e2e-spec.ts        # End-to-end tests for user module
+├── .env                        # Environment variables for local development
+├── package.json                # Project dependencies and scripts
+├── tsconfig.json               # TypeScript configuration
+├── README.md                   # Project documentation
+└── nodemon.json                # Nodemon configuration for development
+```
+
+### Key Features of Folder Structure:
+- **`src/`**: Main source code directory containing all modules and application logic.
+  - **`auth/`**: Handles user authentication, including JWT and local strategies for secure login.
+  - **`users/`**: Manages user information, including CRUD operations and user-related routes.
+  - **`courses/`**: Manages courses, allowing instructors to add, edit, and delete courses.
+  - **`quizzes/`**: Handles adaptive quizzes, managing quiz creation and user interactions.
+  - **`performance/`**: Tracks user performance and metrics related to course completion.
+  - **`chat/`**: Provides real-time chat functionality through WebSocket integration.
+  - **`notifications/`**: Manages notifications, including real-time alerts for users.
+  - **`admin/`**: Handles administrative features, such as managing users and courses.
+  - **`common/`**: Contains reusable utilities like decorators, guards, pipes, filters, and interceptors.
+  - **`config/`**: Stores application-level configurations like database and JWT settings.
+  - **`environment/`**: Contains environment-specific variables for different deployment environments.
+- **`test/`**: Directory for unit and end-to-end tests to ensure the correctness of the application.
+- **`.env`**: Stores environment variables for local development, such as database URIs and JWT secrets.
+
+
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
