@@ -1,34 +1,28 @@
 //import { NestFactory } from '@nestjs/core';
 import { Prop, Schema ,SchemaFactory} from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
-export type UserDocument = User & Document;
+import mongoose, { Document, HydratedDocument } from 'mongoose';
+export type UserDocument = HydratedDocument<User>;
 enum Role {
     Student = 'student',
     Instructor = 'instructor',
     Admin = 'admin',
   }
-@Schema()
+@Schema({ timestamps: true })
 export class  User{
-@Prop({required:true, unique:true})
-user_id: mongoose.Schema.Types.ObjectId;
-
 @Prop({required:true})
 name: string;
 
-@Prop({required:true, unique:true})
+@Prop({required:true})
 email: string;
 
 @Prop({required:true})
-password_hash: string; //hashed password
+password: string;
 
 @Prop({ required: true, enum: Role })
 role: Role;
 
 @Prop({required:false})
 profile_picture_url: string;
-
-@Prop({required:true})
-created_at: Date;  //ask if date.now or not
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
