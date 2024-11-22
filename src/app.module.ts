@@ -8,13 +8,14 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ProgressModule } from './progress/progress.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './auth/auth.module';
 
 const uri:string="mongodb://localhost:27017/e-learning_db"
 
 @Module({
   imports: [
     MongooseModule.forRoot(uri),
-    UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule],
+    UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
