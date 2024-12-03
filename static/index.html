@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Forum</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        #app {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Discussion Forum</h1>
+        
+        <div>
+            <h2>Create Post</h2>
+            <input v-model="newPost.title" placeholder="Title">
+            <input v-model="newPost.content" placeholder="Content">
+            <input v-model="newPost.author" placeholder="Author ID">
+            <input v-model="newPost.course" placeholder="Course ID">
+            <button @click="createPost">Create Post</button>
+        </div>
+
+        <div>
+            <h2>Create Comment</h2>
+            <input v-model="newComment.content" placeholder="Content">
+            <input v-model="newComment.post" placeholder="Post ID">
+            <input v-model="newComment.author" placeholder="Author ID">
+            <button @click="createComment">Create Comment</button>
+        </div>
+
+        <div>
+            <h2>Join Course Room</h2>
+            <input v-model="courseId" placeholder="Course ID">
+            <button @click="joinCourseRoom">Join</button>
+            <button @click="leaveCourseRoom">Leave</button>
+        </div>
+
+        <div>
+            <h2>Join Post Room</h2>
+            <input v-model="postId" placeholder="Post ID">
+            <button @click="joinPostRoom">Join</button>
+            <button @click="leavePostRoom">Leave</button>
+        </div>
+
+        <div>
+            <h2>Messages</h2>
+            <ul>
+                <li v-for="message in messages">{{ message }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                socket: null,
+                newPost: {
+                    title: '',
+                    content: '',
+                    author: '',
+                    course: ''
+                },
+                newComment: {
+                    content: '',
+                    post: '',
+                    author: ''
+                },
+                courseId: '',
+                postId: '',
+                messages: []
+            },
+            methods: {
+                createPost() {
+                    this.socket.emit('createPost', this.newPost);
+                },
+                createComment() {
+                    this.socket.emit('createComment', this.newComment);
+                },
+                async joinCourseRoom() {
+                    this.socket.emit('joinCourseRoom', this.courseId);
+                    try {
+                        const response = await axios.get(`http://localhost:3006/discussions/posts/${this.courseId}`);
+                        response.data.forEach(post => {
+                            this.messages.push(`Post: ${post.title} - ${post.content}`);
+                        });
+                    } catch (error) {
+                        this.messages.push(`Error fetching posts: ${error.message}`);
+                    }
+                },
+                leaveCourseRoom() {
+                    this.socket.emit('leaveCourseRoom', this.courseId);
+                },
+                async joinPostRoom() {
+                    this.socket.emit('joinPostRoom', this.postId);
+                    try {
+                        const response = await axios.get(`http://localhost:3006/discussions/comments/${this.postId}`);
+                        response.data.forEach(comment => {
+                            this.messages.push(`Comment: ${comment.content}`);
+                        });
+                    } catch (error) {
+                        this.messages.push(`Error fetching comments: ${error.message}`);
+                    }
+                },
+                leavePostRoom() {
+                    this.socket.emit('leavePostRoom', this.postId);
+                }
+            },
+            mounted() {
+                this.socket = io('http://localhost:3006/forum');
+                this.socket.on('connected', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('postCreated', (data) => {
+                    this.messages.push(`Post created: ${data.title}`);
+                });
+                this.socket.on('commentCreated', (data) => {
+                    this.messages.push(`Comment created: ${data.content}`);
+                });
+                this.socket.on('roomJoined', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('roomLeft', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('error', (data) => {
+                    this.messages.push(`Error: ${data.message}`);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
