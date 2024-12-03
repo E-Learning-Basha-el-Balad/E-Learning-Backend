@@ -1,20 +1,21 @@
-import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, MinLength, IsEnum } from 'class-validator';
 
 export class CreateUserDTO {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  readonly name: string;
 
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  readonly email: string;
 
   @IsString()
   @IsNotEmpty()
-  password: string;
+  @MinLength(8)
+  readonly password: string;
 
-  @IsString()
   @IsNotEmpty()
-  role:string
-  
+  @IsEnum(['student', 'instructor', 'admin'], { message: 'Role must be either student, instructor, or admin' })
+  readonly role: string;
+
 }

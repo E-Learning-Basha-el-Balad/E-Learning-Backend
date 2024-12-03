@@ -2,13 +2,14 @@
 import { Prop, Schema ,SchemaFactory} from '@nestjs/mongoose';
 import mongoose, { Document, HydratedDocument } from 'mongoose';
 export type UserDocument = HydratedDocument<User>;
-enum Role {
+
+export enum Role {
     Student = 'student',
     Instructor = 'instructor',
     Admin = 'admin',
   }
 @Schema({ timestamps: true })
-export class  User{
+export class  User extends Document{
 @Prop({required:true})
 name: string;
 
