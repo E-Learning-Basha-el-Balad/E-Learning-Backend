@@ -12,9 +12,12 @@ import { CoursesModule } from 'src/courses/courses.module';
         MongooseModule.forFeature([
             { name: 'Comment', schema: CommentSchema },
             { name: 'Post', schema: PostSchema }, 
-    ])
+    ]),
+    UserModule,
+    CoursesModule
     ],
     controllers: [DiscussionsController],
     providers: [DiscussionsService,DiscussionsGateway],
+    exports: [MongooseModule]
 })
 export class DiscussionsModule {}

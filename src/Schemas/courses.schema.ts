@@ -9,7 +9,7 @@ enum DifficultyLevel {
   Advanced = 'Advanced',
 }
 
-@Schema()
+@Schema({timestamps: true})
 export class Course {
   @Prop({ required: true, unique: true })
   course_id: mongoose.Schema.Types.ObjectId; 
@@ -29,8 +29,6 @@ export class Course {
   @Prop({ required: true })
   created_by: string; 
 
-  @Prop({ required: true })
-  created_at: Date; 
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
