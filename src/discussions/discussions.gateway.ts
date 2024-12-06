@@ -105,12 +105,25 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
       // Log the event for debugging
       this.logger.log(`Comment created in post_${payload.post}`);
 
-    } catch (error) {
+      // NOTIFICATION HANDLING FOR REPLY NOTIFICATIONS TO POST AUTHOR
+      const post = await this.discussionsService.getPostById(payload.post);
 
+      // Check if the comment author is different from the post author
+      if (post.author.toString() !== payload.author) {
+        // Emit the notification to the post author
+        this.server.to(`user_${payload.author}`).emit('notification', {
+          message: `New comment on your post: ${post.title} : ${payload.content}`,
+        });
+
+        // Log the notification event
+      this.logger.log(`Notification sent to user_${post.author.toString()} for comment on post_${payload.post.toString()}`);
+
+      }
+
+    } catch (error) {
       // Log error and emit error message to the client
       this.logger.error(`Error creating comment: ${error.message}`, error.stack);
       client.emit('comment:create:error', { message: 'Failed to create comment', details: error.message });
-
     }
   }
 
@@ -250,4 +263,65 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
     
   }
+  
+  // USER ROOMS (FOR NOTIFICATIONS)
+
+  @SubscribeMessage('room:join:user')
+  handleJoinUserRoom(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) userId: ValidateIdDto) {
+    try {
+
+      // Obtain the room name from the user id
+      const roomName = `user_${userId.id}`;
+
+      // Join the room
+      client.join(roomName);
+
+      // Log the event for debugging
+      this.logger.log(`Client ${client.id} joined user room ${roomName}`);
+
+      // Emit a message to the client that they have joined the room
+      client.emit('room:joined:user', { room: roomName, message: `You have joined user room: ${userId.id}` });
+
+    } catch (error) {
+
+      // Log error and emit error message to the client
+      this.logger.error(`Error joining user room: ${error.message}`, error.stack);
+      client.emit('room:join:user:error', { message: 'Failed to join user room', details: error.message });
+
+    }
+  }
+
+  // Leaving a user room for notifications
+  @SubscribeMessage('room:leave:user')
+  handleLeaveUserRoom(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) userId: ValidateIdDto) {
+    try {
+
+      // Obtain the room name from the user id
+      const roomName = `user_${userId.id}`;
+
+      // Leave the room
+      client.leave(roomName);
+
+      // Log the event for debugging
+      this.logger.log(`Client ${client.id} left user room ${roomName}`);
+
+      // Emit a message to the client that they have left the room
+      client.emit('room:left:user', { room: roomName, message: `You have left user room: ${userId.id}` });
+
+    } catch (error) {
+
+      // Log error and emit error message to the client
+      this.logger.error(`Error leaving user room: ${error.message}`, error.stack);
+      client.emit('room:leave:user:error', { message: 'Failed to leave user room', details: error.message });
+      
+    }
+  }
+
+  // SEARCH FUCNTIONALITY (FOR POSTS)
+  @SubscribeMessage('search:post:query')
+  async handleSearchPosts(@MessageBody() query: string, @ConnectedSocket() client: Socket) {
+    const results = await this.discussionsService.searchPosts(query);
+    client.emit('search:post:results', results);
+  }
+
 }

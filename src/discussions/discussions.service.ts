@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -99,5 +99,26 @@ export class DiscussionsService {
     async deleteComment(commentId: string): Promise<CommentDocument> {
         return this.commentModel.findByIdAndDelete(commentId);
     }
+
+    // METHODS FOR NOTIFICATIONS 
+
+    // Get post to handle notifications based on post replies
+    async getPostById(postId: string): Promise<PostDocument> {
+        return this.postModel.findById(postId);
+    }
+
+    //METHODS FOR SEARCH FUNCTIONALITY
+
+    // Search for posts based on a query entered and it gets the similair posts that have the query or parts of it in the title or content
+    async searchPosts(query: string): Promise<PostDocument[]> {
+        return this.postModel.find({ 
+            $or: [
+                { title: { $regex: query, $options: 'i' } },
+                { content: { $regex: query, $options: 'i' } }
+            ]
+        }).exec();
+    }
+
+
 
 }
