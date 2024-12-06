@@ -32,11 +32,5 @@ export class DiscussionsController {
     getCommentsByPost(@Param('postId') postId: string) {
         return this.discussionsService.getCommentsByPost(postId);
     }
-
-    @Post('create-comment')
-    @UsePipes(ValidationPipe)
-    createComment(@Body() createCommentDto: CreateCommentDto) {
-        return this.discussionsService.createComment(createCommentDto);
-    }
-
+    
 }
