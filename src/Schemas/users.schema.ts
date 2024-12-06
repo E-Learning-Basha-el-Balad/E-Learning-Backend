@@ -1,7 +1,9 @@
 //import { NestFactory } from '@nestjs/core';
 import { Prop, Schema ,SchemaFactory} from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
-export type UserDocument = User & Document;
+import mongoose, { Document, HydratedDocument } from 'mongoose';
+export type UserDocument = HydratedDocument<User>;
+
+
 enum Role {
     Student = 'student',
     Instructor = 'instructor',
@@ -9,8 +11,7 @@ enum Role {
   }
 @Schema()
 export class  User{
-@Prop({required:true, unique:true})
-user_id: mongoose.Schema.Types.ObjectId;
+
 
 @Prop({required:true})
 name: string;
@@ -18,16 +19,19 @@ name: string;
 @Prop({required:true, unique:true})
 email: string;
 
-@Prop({required:true})
+@Prop({required:false})
 password_hash: string; //hashed password
 
-@Prop({ required: true, enum: Role })
+@Prop({ required: false, enum: Role })
 role: Role;
 
 @Prop({required:false})
 profile_picture_url: string;
 
 @Prop({required:true})
+gpa: number;
+
+@Prop({required:false})
 created_at: Date;  //ask if date.now or not
 }
 

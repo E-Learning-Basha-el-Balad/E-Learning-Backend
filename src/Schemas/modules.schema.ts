@@ -1,27 +1,25 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, mongo } from 'mongoose';
+import mongoose, { Document, HydratedDocument, mongo } from 'mongoose';
 import {Course} from './courses.schema';
 
-export type ModuleDocument = Module & Document;
+export type ModuleDocument = HydratedDocument<Module>;
 
 @Schema()
 export class Module {
-  @Prop({ required: true, unique: true })
-  module_id: mongoose.Schema.Types.ObjectId; 
-
-  @Prop({ type:mongoose.Schema.Types.ObjectId,required: true, ref: 'Course' })
+  
+  @Prop({ type:mongoose.Schema.Types.ObjectId,required: false, ref: 'Course' })
   course_id: mongoose.Schema.Types.ObjectId; 
 
   @Prop({ required: true })
   title: string; 
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   content: string; 
 
   @Prop({ required: false, type: [String] })
   resources: string[]; 
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   created_at: Date; 
 }
 

@@ -7,10 +7,17 @@ import { ModulesModule } from './modules/modules.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ProgressModule } from './progress/progress.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { QuestionBankModule } from './questionBank/questionBank.module';
 
 @Module({
-  imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost:27017/Swdb'),
+    ResponsesModule,
+    QuizzesModule,
+    QuestionBankModule,
+    UserModule,
+  ],
 })
 export class AppModule {}
+
