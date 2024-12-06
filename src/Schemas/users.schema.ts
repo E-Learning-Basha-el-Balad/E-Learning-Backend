@@ -9,8 +9,6 @@ enum Role {
   }
 @Schema()
 export class  User{
-@Prop({required:true, unique:true})
-user_id: mongoose.Schema.Types.ObjectId;
 
 @Prop({required:true})
 name: string;
@@ -29,6 +27,9 @@ profile_picture_url: string;
 
 @Prop({required:true})
 created_at: Date;  //ask if date.now or not
+
+@Prop({required:true})
+gpa: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

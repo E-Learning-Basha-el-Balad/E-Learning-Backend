@@ -6,8 +6,6 @@ export type ModuleDocument = Module & Document;
 
 @Schema()
 export class Module {
-  @Prop({ required: true, unique: true })
-  module_id: mongoose.Schema.Types.ObjectId; 
 
   @Prop({ type:mongoose.Schema.Types.ObjectId,required: true, ref: 'Course' })
   course_id: mongoose.Schema.Types.ObjectId; 

@@ -11,8 +11,6 @@ enum DifficultyLevel {
 
 @Schema()
 export class Course {
-  @Prop({ required: true, unique: true })
-  course_id: mongoose.Schema.Types.ObjectId; 
 
   @Prop({ required: true })
   title: string; 
