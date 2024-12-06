@@ -11,13 +11,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BackupService } from './backup/backup.service';
+import { ChatModule } from './chat/chat.module';
 
 const uri:string="mongodb://localhost:27017/e-learning_db"
 
 @Module({
   imports: [
     MongooseModule.forRoot(uri),
-    UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule, AuthModule],
+    UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule, AuthModule, ChatModule],
   controllers: [AppController],
   providers: [AppService, BackupService],
 })
