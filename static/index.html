@@ -4,292 +4,172 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discussion Forum</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
             background-color: #f4f4f4;
-        }
-        .container {
-            width: 80%;
-            margin: auto;
-            overflow: hidden;
-        }
-        header {
-            background: #333;
-            color: #fff;
-            padding-top: 30px;
-            min-height: 70px;
-            border-bottom: #77aaff 3px solid;
-        }
-        header a {
-            color: #fff;
-            text-decoration: none;
-            text-transform: uppercase;
-            font-size: 16px;
-        }
-        header ul {
-            padding: 0;
-            list-style: none;
-        }
-        header li {
-            float: left;
-            display: inline;
-            padding: 0 20px 0 20px;
-        }
-        header #branding {
-            float: left;
-        }
-        header #branding h1 {
             margin: 0;
+            padding: 0;
         }
-        header nav {
-            float: right;
-            margin-top: 10px;
-        }
-        .main-content {
+        #app {
+            max-width: 800px;
+            margin: 50px auto;
             padding: 20px;
-            background: #fff;
-            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .post, .comment {
-            background: #e4e4e4;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
+        h1, h2 {
+            color: #333;
         }
-        .post-title {
-            font-weight: bold;
-        }
-        .dropdown {
-            margin-top: 10px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
+        input, button {
             display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
+            margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        .form-group button {
-            padding: 10px 20px;
-            background: #333;
+        button {
+            background-color: #007BFF;
             color: #fff;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div id="branding">
-                <h1>Discussion Forum</h1>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="#">Home</a></li>
-                </ul>
-            </nav>
+    <div id="app">
+        <h1>Discussion Forum</h1>
+        
+        <div>
+            <h2>Create Post</h2>
+            <input v-model="newPost.title" placeholder="Title">
+            <input v-model="newPost.content" placeholder="Content">
+            <input v-model="newPost.author" placeholder="Author ID">
+            <input v-model="newPost.course" placeholder="Course ID">
+            <button @click="createPost">Create Post</button>
         </div>
-    </header>
-
-    <div class="container main-content">
-        <div class="form-group">
-            <label for="courseId">Enter Course ID:</label>
-            <input type="text" id="courseId">
-            <button onclick="enterCourse()">Enter Course</button>
+        <div>
+            <h2>Create Comment</h2>
+            <input v-model="newComment.content" placeholder="Content">
+            <input v-model="newComment.post" placeholder="Post ID">
+            <input v-model="newComment.author" placeholder="Author ID">
+            <button @click="createComment">Create Comment</button>
         </div>
-
-        <div class="form-group">
-            <h2>Create New Post</h2>
-            <label for="postTitle">Title:</label>
-            <input type="text" id="postTitle">
-            <label for="postContent">Content:</label>
-            <textarea id="postContent"></textarea>
-            <label for="postAuthor">Author ID:</label>
-            <input type="text" id="postAuthor">
-            <button onclick="createPost()">Create Post</button>
+        <div>
+            <h2>Join Course Room</h2>
+            <input v-model="courseId" placeholder="Course ID">
+            <button @click="joinCourseRoom">Join</button>
+            <button @click="leaveCourseRoom">Leave</button>
         </div>
-
-        <div class="form-group">
-            <label for="postId">Enter Post ID:</label>
-            <input type="text" id="postId">
-            <button onclick="enterPost()">Enter Post</button>
+        <div>
+            <h2>Join Post Room</h2>
+            <input v-model="postId" placeholder="Post ID">
+            <button @click="joinPostRoom">Join</button>
+            <button @click="leavePostRoom">Leave</button>
         </div>
-
-        <div class="form-group">
-            <h2>Create New Comment</h2>
-            <label for="commentContent">Content:</label>
-            <textarea id="commentContent"></textarea>
-            <label for="commentAuthor">Author ID:</label>
-            <input type="text" id="commentAuthor">
-            <button onclick="createComment()">Create Comment</button>
+        <div>
+            <h2>Messages</h2>
+            <ul>
+                <li v-for="message in messages">{{ message }}</li>
+            </ul>
         </div>
-
-        <div id="posts"></div>
     </div>
-
     <script>
-        let currentCourseId = '';
-        let currentPostId = '';
-
-        const socket = io('/forum');
-
-        socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-        });
-
-        socket.on('post:created', (post) => {
-            if (post.course === currentCourseId) {
-                displayPost(post);
+        new Vue({
+            el: '#app',
+            data: {
+                socket: null,
+                newPost: {
+                    title: '',
+                    content: '',
+                    author: '',
+                    course: ''
+                },
+                newComment: {
+                    content: '',
+                    post: '',
+                    author: ''
+                },
+                courseId: '',
+                postId: '',
+                messages: []
+            },
+            methods: {
+                createPost() {
+                    this.socket.emit('createPost', this.newPost);
+                },
+                createComment() {
+                    this.socket.emit('createComment', this.newComment);
+                },
+                async joinCourseRoom() {
+                    this.socket.emit('joinCourseRoom', this.courseId);
+                    try {
+                        const response = await axios.get(`http://localhost:3006/discussions/posts/${this.courseId}`);
+                        response.data.forEach(post => {
+                            this.messages.push(`Post: ${post.title} - ${post.content}`);
+                        });
+                    } catch (error) {
+                        this.messages.push(`Error fetching posts: ${error.message}`);
+                    }
+                },
+                leaveCourseRoom() {
+                    this.socket.emit('leaveCourseRoom', this.courseId);
+                },
+                async joinPostRoom() {
+                    this.socket.emit('joinPostRoom', this.postId);
+                    try {
+                        const response = await axios.get(`http://localhost:3006/discussions/comments/${this.postId}`);
+                        response.data.forEach(comment => {
+                            this.messages.push(`Comment: ${comment.content}`);
+                        });
+                    } catch (error) {
+                        this.messages.push(`Error fetching comments: ${error.message}`);
+                    }
+                },
+                leavePostRoom() {
+                    this.socket.emit('leavePostRoom', this.postId);
+                }
+            },
+            mounted() {
+                this.socket = io('http://localhost:3006/forum');
+                this.socket.on('connected', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('postCreated', (data) => {
+                    this.messages.push(`Post created: ${data.title}`);
+                });
+                this.socket.on('commentCreated', (data) => {
+                    this.messages.push(`Comment created: ${data.content}`);
+                });
+                this.socket.on('roomJoined', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('roomLeft', (data) => {
+                    this.messages.push(data.message);
+                });
+                this.socket.on('error', (data) => {
+                    this.messages.push(`Error: ${data.message}`);
+                });
             }
-        });
-
-        socket.on('post:deleted', (post) => {
-            if (post.course === currentCourseId) {
-                enterCourse();
-            }
-        });
-
-        socket.on('comment:created', (comment) => {
-            if (comment.post === currentPostId) {
-                displayComment(comment.post, comment);
-            }
-        });
-
-        socket.on('comment:deleted', (comment) => {
-            if (comment.post === currentPostId) {
-                removeComment(comment._id);
-            }
-        });
-
-        async function enterCourse() {
-            currentCourseId = document.getElementById('courseId').value;
-            socket.emit('room:join:course', { id: currentCourseId });
-            const response = await fetch(`/discussions/posts/${currentCourseId}`);
-            const data = await response.json();
-            displayPosts(data.data);
-        }
-
-        async function enterPost() {
-            currentPostId = document.getElementById('postId').value;
-            socket.emit('room:join:post', { id: currentPostId });
-            const response = await fetch(`/discussions/comments/${currentPostId}`);
-            const data = await response.json();
-            displayComments(currentPostId, data.data);
-        }
-
-        function displayPosts(posts) {
-            const postsContainer = document.getElementById('posts');
-            postsContainer.innerHTML = '';
-            posts.forEach(post => {
-                displayPost(post);
-            });
-        }
-
-        function displayPost(post) {
-            const postsContainer = document.getElementById('posts');
-            const postElement = document.createElement('div');
-            postElement.classList.add('post');
-            postElement.innerHTML = `
-                <div class="post-title">${post.title}</div>
-                <div>${post.content}</div>
-                <div>Author: ${post.author}</div>
-                <div>Date: ${new Date(post.createdAt).toLocaleString()}</div>
-                <button onclick="deletePost('${post._id}')">Delete Post</button>
-                <div class="dropdown">
-                    <button onclick="toggleComments('${post._id}')">Show Comments</button>
-                    <div id="comments-${post._id}" style="display: none;">
-                        <div id="comments-list-${post._id}"></div>
-                    </div>
-                </div>
-            `;
-            postsContainer.appendChild(postElement);
-        }
-
-        async function toggleComments(postId) {
-            const commentsContainer = document.getElementById(`comments-${postId}`);
-            if (commentsContainer.style.display === 'none') {
-                commentsContainer.style.display = 'block';
-                socket.emit('room:join:post', { id: postId });
-                const response = await fetch(`/discussions/comments/${postId}`);
-                const data = await response.json();
-                displayComments(postId, data.data);
-            } else {
-                commentsContainer.style.display = 'none';
-                socket.emit('room:leave:post', { id: postId });
-            }
-        }
-
-        function displayComments(postId, comments) {
-            const commentsList = document.getElementById(`comments-list-${postId}`);
-            commentsList.innerHTML = '';
-            comments.forEach(comment => {
-                displayComment(postId, comment);
-            });
-        }
-
-        function displayComment(postId, comment) {
-            const commentsList = document.getElementById(`comments-list-${postId}`);
-            const commentElement = document.createElement('div');
-            commentElement.classList.add('comment');
-            commentElement.id = `comment-${comment._id}`;
-            commentElement.innerHTML = `
-                <div>${comment.content}</div>
-                <div>Author: ${comment.author}</div>
-                <div>Date: ${new Date(comment.createdAt).toLocaleString()}</div>
-                <button onclick="deleteComment('${comment._id}', '${postId}')">Delete Comment</button>
-            `;
-            commentsList.appendChild(commentElement);
-        }
-
-        function removeComment(commentId) {
-            const commentElement = document.getElementById(`comment-${commentId}`);
-            if (commentElement) {
-                commentElement.remove();
-            }
-        }
-
-        function createPost() {
-            const title = document.getElementById('postTitle').value;
-            const content = document.getElementById('postContent').value;
-            const author = document.getElementById('postAuthor').value;
-
-            console.log('Creating post:', { title, content, author, course: currentCourseId });
-            socket.emit('post:create', { title, content, author, course: currentCourseId });
-        }
-
-        function createComment() {
-            const content = document.getElementById('commentContent').value;
-            const author = document.getElementById('commentAuthor').value;
-
-            console.log('Creating comment:', { content, author, post: currentPostId });
-            socket.emit('comment:create', { content, author, post: currentPostId });
-        }
-
-        function deletePost(postId) {
-            console.log('Deleting post:', postId);
-            socket.emit('post:delete', postId);
-        }
-
-        function deleteComment(commentId, postId) {
-            console.log('Deleting comment:', { commentId, postId });
-            socket.emit('comment:delete', commentId);
-        }
-
-        socket.on('comment:create:error', (error) => {
-            console.error('Error creating comment:', error);
         });
     </script>
-    <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>

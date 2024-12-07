@@ -107,18 +107,9 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
       // NOTIFICATION HANDLING FOR REPLY NOTIFICATIONS TO POST AUTHOR
       const post = await this.discussionsService.getPostById(payload.post);
-
-      // Check if the comment author is different from the post author
-      if (post.author.toString() !== payload.author) {
-        // Emit the notification to the post author
-        this.server.to(`user_${payload.author}`).emit('notification', {
-          message: `New comment on your post: ${post.title} : ${payload.content}`,
-        });
-
-        // Log the notification event
-      this.logger.log(`Notification sent to user_${post.author.toString()} for comment on post_${payload.post.toString()}`);
-
-      }
+      this.server.to(`user_${post.author}`).emit('notification', { message: 'You have a new reply to your post', data: post.title });
+      
+     this.logger.log(`Post author: ${post.author.toString()}`);
 
     } catch (error) {
       // Log error and emit error message to the client
@@ -317,11 +308,74 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // SEARCH FUCNTIONALITY (FOR POSTS)
-  @SubscribeMessage('search:post:query')
-  async handleSearchPosts(@MessageBody() query: string, @ConnectedSocket() client: Socket) {
-    const results = await this.discussionsService.searchPosts(query);
-    client.emit('search:post:results', results);
+  // SEARCH FUCNTIONALITY 
+
+  // POSTS 
+
+  // Search for posts by title
+  @SubscribeMessage('search:post:title')
+  async handleSearchPostByTitle(@ConnectedSocket() client: Socket, @MessageBody() query: string) {
+    try {
+
+      // Handle the search logic from the service
+      const posts = await this.discussionsService.searchPostsTitle(query);
+
+      // Emit the search results to the client
+      client.emit('search:post:title:results', { message: 'Search results for posts by title', data: posts });
+
+    } catch (error) {
+
+      // Log error and emit error message to the client
+      this.logger.error(`Error searching posts by title: ${error.message}`, error.stack);
+      client.emit('search:post:title:error', { message: 'Failed to search posts by title', details: error.message });
+
+    }
   }
+
+  // Search for posts by content
+  @SubscribeMessage('search:post:content')
+  async handleSearchPostByContent(@ConnectedSocket() client: Socket, @MessageBody() query: string) {
+    try {
+
+      // Handle the search logic from the service
+      const posts = await this.discussionsService.searchPostsContent(query);
+
+      // Emit the search results to the client
+      client.emit('search:post:content:results', { message: 'Search results for posts by content', data: posts });
+
+    } catch (error) {
+
+      // Log error and emit error message to the client
+      this.logger.error(`Error searching posts by content: ${error.message}`, error.stack);
+      client.emit('search:post:content:error', { message: 'Failed to search posts by content', details: error.message });
+
+    }
+  }
+
+
+  // COURSES (MAY REMOVE)
+
+  // Search for enrolled coures to access the discussion forum for it
+  @SubscribeMessage('search:course')
+  async handleSearchCourses(@ConnectedSocket() client: Socket, @MessageBody() query: string) {
+    try {
+
+      // Handle the search logic from the service
+      const courses = await this.discussionsService.searchEnrolledCourses(query);
+
+      // Emit the search results to the client
+      client.emit('search:course:results', { message: 'Search results for enrolled courses', data: courses });
+
+    } catch (error) {
+
+      // Log error and emit error message to the client
+      this.logger.error(`Error searching courses: ${error.message}`, error.stack);
+      client.emit('search:course:error', { message: 'Failed to search courses', details: error.message });
+
+    }
+  }
+
+
+  
 
 }

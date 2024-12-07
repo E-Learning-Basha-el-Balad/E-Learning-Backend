@@ -1,8 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, UsePipes, ValidationPipe } from '@nestjs/common';
 import { DiscussionsService } from './discussions.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { ValidateIdDto } from './dto/validate-id-dto';
+
 
 @Controller('discussions')
 export class DiscussionsController {

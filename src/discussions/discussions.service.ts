@@ -50,7 +50,7 @@ export class DiscussionsService {
         // If no posts are found return a message saying so
         if (posts.length === 0) 
             return { message: 'No posts found for this course', data: [] };
-        
+
         
         // Return the posts
         return { message: 'Posts found', data: posts };
@@ -107,16 +107,23 @@ export class DiscussionsService {
         return this.postModel.findById(postId);
     }
 
-    //METHODS FOR SEARCH FUNCTIONALITY
+    // METHODS FOR SEARCH FUNCTIONALITY
 
-    // Search for posts based on a query entered and it gets the similair posts that have the query or parts of it in the title or content
-    async searchPosts(query: string): Promise<PostDocument[]> {
-        return this.postModel.find({ 
-            $or: [
-                { title: { $regex: query, $options: 'i' } },
-                { content: { $regex: query, $options: 'i' } }
-            ]
-        }).exec();
+    // Search for enrolled coures to access the discussion forum for it
+    async searchEnrolledCourses(query: string): Promise<CourseDocument[]> {
+        return this.courseModel.find({ name: { $regex: query, $options: 'i' } }).exec();
+    }
+
+    // Search for post within a discussion forum
+
+    // Search for posts by title
+    async searchPostsTitle(query: string): Promise<PostDocument[]> {
+        return this.postModel.find({ title: { $regex: query, $options: 'i' } }).exec();
+    }
+
+    // Search for posts by content
+    async searchPostsContent(query: string): Promise<PostDocument[]> {
+        return this.postModel.find({ content: { $regex: query, $options: 'i' } }).exec();
     }
 
 

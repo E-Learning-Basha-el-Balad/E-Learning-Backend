@@ -12,11 +12,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { DiscussionsService } from './discussions/discussions.service';
 import { DiscussionsController } from './discussions/discussions.controller';
 import { DiscussionsModule } from './discussions/discussions.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
   MongooseModule.forRoot('mongodb://localhost:27017/DiscussionForumV2 '),
-  DiscussionsModule],
+  DiscussionsModule,
+  AnnouncementsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
