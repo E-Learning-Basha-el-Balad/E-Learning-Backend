@@ -56,10 +56,50 @@ export class DiscussionsService {
         return { message: 'Posts found', data: posts };
     }
 
-    // Delete a post
-    async deletePost(postId: string): Promise<PostDocument> {
+    // DELETE POST ( 3 IMPLEMENTATIONS FOR THE 3 DIFFERENT ROLES)
+
+    //(MAMDO) SHOULD USE GUARDS TO CHECK IF THE USER IS AUTHORIZED TO USE THE CORRECT DELETE METHOD
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    // Admin
+    async deletePostAdmin(postId: string): Promise<PostDocument> {
         return this.postModel.findByIdAndDelete(postId);
+
+        // Guard should handle if it is unauthorized (MAMDO)
+
     }
+
+    // Instructor
+    async deletePostInstructor(postId: string, instructorId: string): Promise<PostDocument> {
+
+        const post = await this.postModel.findById(postId);
+
+        // Checks if the ID entered is the ID of the course instructor
+        if (post.course.instructorId.toString() == instructorId) {
+            return this.postModel.findByIdAndDelete(postId);
+        }
+
+        // Guard should handle if it is unauthorized (MAMDO)
+    }
+
+    // Student
+    async deletePostStudent(postId: string, studentId: string): Promise<PostDocument> {
+
+        const post = await this.postModel.findById(postId);
+
+        // Checks if the ID entered is the ID of the student who created the post
+        if (post.author.toString() == studentId) {
+            return this.postModel.findByIdAndDelete(postId);
+        }
+
+        // Guard should handle if it is unauthorized (MAMDO)
+
+
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+
 
     //COMMENTS
 
@@ -95,10 +135,37 @@ export class DiscussionsService {
 
     }
     
+    // DELETE COMMENT ( 3 IMPLEMENTATIONS FOR THE 3 DIFFERENT ROLES)
+    // (MAMDO) SHOULD USE GUARDS TO CHECK IF THE USER IS AUTHORIZED TO USE THE CORRECT DELETE METHOD
+    ////////////////////////////////////////////////////////////////////////////////////
 
-    async deleteComment(commentId: string): Promise<CommentDocument> {
+     // Admin
+     async deleteCommentAdmin(commentId: string): Promise<CommentDocument> {
         return this.commentModel.findByIdAndDelete(commentId);
     }
+
+    // Instructor
+    async deleteCommentInstructor(commentId: string, instructorId: string): Promise<CommentDocument> {
+        const comment = await this.commentModel.findById(commentId);
+        const post = await this.postModel.findById(comment.post);
+
+        if (post.course.instructorId.toString() === instructorId) {
+            return this.commentModel.findByIdAndDelete(commentId);
+        }
+        throw new Error('Unauthorized');
+    }
+
+    // Student
+    async deleteCommentStudent(commentId: string, studentId: string): Promise<CommentDocument> {
+        const comment = await this.commentModel.findById(commentId);
+
+        if (comment.author.toString() === studentId) {
+            return this.commentModel.findByIdAndDelete(commentId);
+        }
+        throw new Error('Unauthorized');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////
 
     // METHODS FOR NOTIFICATIONS 
 

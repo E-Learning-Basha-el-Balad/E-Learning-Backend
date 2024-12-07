@@ -22,7 +22,7 @@ export class AnnouncementsGateway {
   private readonly logger = new Logger(AnnouncementsGateway.name);
 
   @SubscribeMessage('announcement:create')
-  async handleCreateAnnouncement(@ConnectedSocket() client: Socket, payload: CreateAnnouncementDto) {
+  async handleCreateAnnouncement(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateAnnouncementDto) {
     try {
 
       // Handle the creation logic from the service
@@ -45,23 +45,28 @@ export class AnnouncementsGateway {
     }
   }
 
-  @SubscribeMessage('deleteAnnouncement')
-  async handleDeleteAnnouncement(@ConnectedSocket() client: Socket, payload: { id: string, courseRoomId: string }){
+  @SubscribeMessage('announcement:delete')
+  async handleDeleteAnnouncement(@ConnectedSocket() client: Socket,@MessageBody() announcementId: string){
     try{
-      const announcement = this.announcementsService.deleteAnnouncement(payload.id);
-      this.server.to(`course_${payload.courseRoomId}`).emit('announcementDeleted', announcement);
+
+      // Handle the deletion logic from the service
+      const announcement = await this.announcementsService.deleteAnnouncement(announcementId);
+
+      // Emit the deleted post to the corresponding course room of the post creator
+      this.server.to(`course_${announcement.course}`).emit('announcement:deleted', announcement);
+
+      // Log the event for debugging
+      this.logger.log(`Announcement deleted in course_${announcement.course}`);
 
     }catch(error){
 
       // Log error and emit error message to the client
       this.logger.error(`Error deleting announcement: ${error.message}`, error.stack);
-      client.emit('deleteAnnouncement:error', { message: 'Failed to delete announcement', details: error.message });
+      client.emit('announcement:delete:error', { message: 'Failed to delete announcement', details: error.message });
 
     }
-    const announcement = this.announcementsService.deleteAnnouncement(payload.id);
-    this.server.to(`course_${payload.courseRoomId}`).emit('announcementDeleted', announcement);
-    
   }
+  
 
   //HANDLING COURSE ROOMS
 
@@ -80,7 +85,7 @@ export class AnnouncementsGateway {
       this.logger.log(`Client ${client.id} joined course room ${roomName}`);
 
       // Emit a message to the client that they have joined the room
-      client.emit('room:joined:course', { room: roomName, message: `You have joined the forum for course: ${courseId}`});
+      client.emit('room:joined:course', { room: roomName, message: `You have joined the forum for course: ${courseId.id}`});
 
     }catch(error){
       
@@ -107,7 +112,7 @@ export class AnnouncementsGateway {
       this.logger.log(`Client ${client.id} left course room ${roomName}`);
 
       // Emit a message to the client that they have left the room
-      client.emit('room:left:course', { room: roomName, message: `You have left the forum for course: ${courseId}`});
+      client.emit('room:left:course', { room: roomName, message: `You have left the forum for course: ${courseId.id}`});
 
     }catch(error){
 

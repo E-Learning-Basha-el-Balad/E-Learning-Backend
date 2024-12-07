@@ -68,11 +68,31 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // Listen for post deletion
   @SubscribeMessage('post:delete')
-  async handleDeletePost(@ConnectedSocket() client: Socket, @MessageBody() postId: string) {
+  //@UseGuards(RolesGuard) (SHOULD USE A GUARD TO CHECK THE ROLE OF THE USER) (MAMDOOOOOO)
+  async handleDeletePost(@ConnectedSocket() client: Socket, @MessageBody() { postId, role, userId }: { postId: string, role: string, userId: string }) {
     try {
 
-      // Handle the deletion logic from the service
-      const post = await this.discussionsService.deletePost(postId);
+      // Check the role of the user and call the corresponding service method
+      let post;
+
+      switch (role) {
+
+        case 'admin':
+          post = await this.discussionsService.deletePostAdmin(postId);
+          break;
+
+        case 'instructor':
+          post = await this.discussionsService.deletePostInstructor(postId, userId);
+          break;
+
+        case 'student':
+          post = await this.discussionsService.deletePostStudent(postId, userId);
+          break;
+
+        default:
+          throw new Error('Unauthorized');
+
+      }
 
       // Emit the deleted post to the corresponding course room of the post creator
       this.server.to(`course_${post.course}`).emit('post:deleted', post);
@@ -82,7 +102,6 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
     } catch (error) {
 
-      // Log error and emit error message to the client
       this.logger.error(`Error deleting post: ${error.message}`, error.stack);
       client.emit('post:delete:error', { message: 'Failed to delete post', details: error.message });
 
@@ -118,15 +137,35 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  //Listen for comment deletion
+  // Listen for comment deletion
   @SubscribeMessage('comment:delete')
-  async handleDeleteComment(@ConnectedSocket() client: Socket, @MessageBody() commentId: string) {
+  //@UseGuards(RolesGuard) (SHOULD USE A GUARD TO CHECK THE ROLE OF THE USER) (MAMDOOOOOO)
+  async handleDeleteComment(@ConnectedSocket() client: Socket, @MessageBody() { commentId, role, userId }: { commentId: string, role: string, userId: string }) {
     try {
 
-      // Handle the deletion logic from the service
-      const comment = await this.discussionsService.deleteComment(commentId);
+      // Check the role of the user and call the corresponding service method
+      let comment;
 
-      // Emit the deleted comment to the corresponding post room of the comment creator
+      switch (role) {
+
+        case 'admin':
+          comment = await this.discussionsService.deleteCommentAdmin(commentId);
+          break;
+
+        case 'instructor':
+          comment = await this.discussionsService.deleteCommentInstructor(commentId, userId);
+          break;
+
+        case 'student':
+          comment = await this.discussionsService.deleteCommentStudent(commentId, userId);
+          break;
+
+        default:
+          throw new Error('Unauthorized');
+
+      }
+
+      // Emit the deleted comment to the corresponding post room of the comment
       this.server.to(`post_${comment.post}`).emit('comment:deleted', comment);
 
       // Log the event for debugging

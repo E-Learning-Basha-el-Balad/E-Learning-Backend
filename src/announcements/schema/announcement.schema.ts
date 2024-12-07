@@ -14,7 +14,7 @@ export class Announcement {
     content: string;
     
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true})
-    instructer: User;
+    instructor: User;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true })
     course: Course;

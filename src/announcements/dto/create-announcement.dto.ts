@@ -9,7 +9,7 @@ export class CreateAnnouncementDto{
     
     @IsNotEmpty()
     @IsMongoId()
-    instructer: string;
+    instructor: string;
     
     @IsNotEmpty()
     @IsMongoId()
