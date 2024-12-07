@@ -86,18 +86,26 @@ export class ResponsesService {
   }
 
   private async updateUserGPA(user_id: ObjectId, normalizedScore: number): Promise<void> {
-    const user = await this.userModel.findById(user_id)
+    const user = await this.userModel.findById(user_id);
     if (!user) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
   
     // Example GPA adjustment logic (scale GPA to a max of 4.0)
-    const newGPA = (user.gpa || 0) + normalizedScore * 4; // Adjust scale as needed
+    const currentGPA = user.gpa || 0;
+    
+    // Calculate the impact of the quiz on GPA
+    const gpaImpact = (normalizedScore - 0.5) * 2; 
+    // `normalizedScore - 0.5`: A score of 50% has no impact. Above increases GPA, below decreases GPA.
+    // Multiply by a factor (2 here) to scale the impact.
+  
+    const newGPA = Math.max(0, Math.min(currentGPA + gpaImpact, 4.0)); // Ensure GPA is between 0 and 4.0
   
     // Update the user's GPA in the database
-    user.gpa = Math.min(newGPA, 4.0); // Ensure GPA doesn't exceed 4.0
+    user.gpa = newGPA;
     await user.save();
   }
+  
   
 
   /**
