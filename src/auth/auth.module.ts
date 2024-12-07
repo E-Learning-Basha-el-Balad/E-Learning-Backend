@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import {UserModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
-import { LogsModule } from 'src/logs/logs.module'; // Import LogsModule
+import { LogsModule } from 'src/logging/logs.module'; // Import LogsModule
 import * as dotenv from 'dotenv';
 
 //EVENTUALLLY MOVE THIS TO ENV FILE
