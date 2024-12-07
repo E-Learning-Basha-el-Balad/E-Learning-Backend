@@ -11,17 +11,19 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
+  
+    // Define the rest of the methods as needed
   async getUserByEmail(email:string):Promise<User | null>{
     const user = await this.userModel.findOne({email:email})
     
-    if (!user){
-      
+    if (!user){  
       return null
     }
     
     return user
   }
   
+
   async register(userData: CreateUserDTO): Promise<UserDocument> {
     
       const newUser = new this.userModel(userData);

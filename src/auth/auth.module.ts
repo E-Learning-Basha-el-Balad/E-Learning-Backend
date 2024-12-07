@@ -12,7 +12,7 @@ const jwt_secret="12a54731169d4b483466999f9c0977c874c5f846f00f6138ec2d110659379a
   imports:[UserModule,JwtModule.register({
     global:true,
     secret:jwt_secret,
-    signOptions:{expiresIn:'1d'}
-  })]
+    signOptions:{expiresIn:'1d'}})],
+    exports:[AuthService],
 })
 export class AuthModule {}

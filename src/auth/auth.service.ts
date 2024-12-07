@@ -2,7 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDTO } from 'src/users/CreateUser.dto';
 import { LoginUserDTO } from 'src/users/loginUser.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AuthService {
@@ -12,25 +12,27 @@ export class AuthService {
 
     async authenticateLogin(loginCreds:LoginUserDTO){
         const user = await this.UsersService.getUserByEmail(loginCreds.email)
-        if(user){
-            const password_compare = await bcrypt.compare(loginCreds.password,user.password)
-            if(password_compare){
-                return await this.genToken(user)
-            }
-           
+        if(!user){
+            throw new UnauthorizedException('Invalid credentials');
         }
-        throw new UnauthorizedException()
+        
+        const password_compare = await bcrypt.compare(loginCreds.password,user.password)
+        if(!password_compare){
+            throw new UnauthorizedException('Invalid credentials');
+        }
+        
+        return await this.genToken(user)
     }            
 
     async genToken(user){
         const tokenPayload={
-            id:user._id,
+            sub: user._id,
             role:user.role
         }
 
-        const acessToken = await this.jwtService.signAsync(tokenPayload)
+        const accessToken = await this.jwtService.signAsync(tokenPayload)
 
-        return {acessToken, id:user._id, role:user.role}
+        return {accessToken, id:user._id, role:user.role}
     }
 
     async register(userData:CreateUserDTO){
@@ -44,15 +46,4 @@ export class AuthService {
         return await this.UsersService.register(userData)
 
     }
-
-
-
-
-    
-
-
-
-
-
-
 }
