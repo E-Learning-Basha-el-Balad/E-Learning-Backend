@@ -5,29 +5,35 @@ import { CreateUserDTO } from 'src/users/CreateUser.dto';
 import { LoginUserDTO } from 'src/users/loginUser.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
+import { LogsService } from '../logs/logs.service';
+
 @Injectable()
 export class AuthService {
-    constructor(private UsersService:UsersService,
-                private jwtService:JwtService){}
-                
+    constructor(
+        private UsersService: UsersService,
+        private jwtService: JwtService,
+        private logsService: LogsService
+    ) {}
 
-                async authenticateLogin(loginCreds: LoginUserDTO, res: Response) {
-                    const user = await this.UsersService.getUserByEmail(loginCreds.email);
-                    if (user) {
-                        const password_compare = await bcrypt.compare(loginCreds.password, user.password);
-                        if (password_compare) {
-                            const token = await this.genToken(user);
-                            res.cookie('jwt', token.accessToken, {
-                                httpOnly: true, //prevents xss
-                                secure: process.env.NODE_ENV === 'production', // secure cookies that are sent over https only for production and not for development
-                                maxAge: 24 * 60 * 60 * 1000, // 1000 ms = 1 second, 60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day
-                                sameSite: 'strict', //prevents csrf
-                            });
-                            return { id: user._id, role: user.role };
-                        }
-                    }
-                    throw new UnauthorizedException();
-                }
+    async authenticateLogin(loginCreds: LoginUserDTO, res: Response) {
+        const user = await this.UsersService.getUserByEmail(loginCreds.email);
+        
+        if (!user || !(await bcrypt.compare(loginCreds.password, user.password))) {
+            await this.logsService.logFailedLogin(loginCreds.email);
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        const token = await this.genToken(user);
+        res.cookie('jwt', token.accessToken, {
+            httpOnly: true,//prevents xss
+            secure: process.env.NODE_ENV === 'production', // secure cookies that are sent over https only for production and not for development
+            maxAge: 24 * 60 * 60 * 1000,// 1000 ms = 1 second, 60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day
+            sameSite: 'strict',//prevents csrf
+        });
+        
+        return { id: user._id, role: user.role };
+    }
+
     async genToken(user){
         const tokenPayload={
             id:user._id,
@@ -54,16 +60,4 @@ export class AuthService {
     
         return await this.UsersService.register(newUser);
     }
-    
-
-
-
-
-    
-
-
-
-
-
-
 }
