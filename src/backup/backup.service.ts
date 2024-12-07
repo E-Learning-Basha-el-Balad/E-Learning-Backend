@@ -18,7 +18,7 @@ import * as fs from 'fs';
 export class BackupService {
   private readonly logger = new Logger(BackupService.name);
 
-  @Cron('0 2 1 * *') // Backs up at 2:00 AM on the first day of every month
+  @Cron('0 0 * * *') // Backs up at 12:00 AM daily
   async handleBackup() {
     try {
       const backupDir = path.resolve(__dirname, '../backups');
