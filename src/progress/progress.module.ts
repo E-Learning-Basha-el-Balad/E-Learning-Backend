@@ -8,6 +8,8 @@ import { CourseSchema } from 'src/Schemas/courses.schema';
 import { ModuleSchema } from 'src/Schemas/modules.schema';
 import { QuizSchema } from 'src/Schemas/quizzes.schema';
 import { UserSchema } from 'src/Schemas/users.schema';
+import { Rating, RatingSchema } from 'src/Schemas/ratings.schema';
+
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: "Progress", schema: ProgressSchema }]),
@@ -15,7 +17,8 @@ import { UserSchema } from 'src/Schemas/users.schema';
     MongooseModule.forFeature([{ name: "Course", schema: CourseSchema }]),
     MongooseModule.forFeature([{ name: "Module", schema: ModuleSchema }]),
     MongooseModule.forFeature([{ name: "Quiz", schema: QuizSchema }]),
-    MongooseModule.forFeature([{ name: "User", schema: UserSchema}])
+    MongooseModule.forFeature([{ name: "User", schema: UserSchema}]),
+    MongooseModule.forFeature([{ name: "Rating", schema: RatingSchema}])
   ],
   providers: [ProgressService],
   controllers: [ProgressController],

@@ -60,6 +60,28 @@ export class ProgressController {
         return engagement;
     }
 
+    @Post('/rate-instructor')
+    @UsePipes(new ValidationPipe())
+    async rateInstructor(@Body('studentId') studentId: string, @Body('courseId') courseId: string, @Body('rating') rating: number) {
+        return await this.progressService.rateInstructor(studentId, courseId, rating);
+    }
+
+    @Post('/rate-module')
+    @UsePipes(new ValidationPipe())
+    async rateModule(@Body('studentId') studentId: string, @Body('moduleId') moduleId: string, @Body('rating') rating: number) {
+        return await this.progressService.rateModule(studentId, moduleId, rating);
+    }
+
+    @Get('/course-rating')
+    @UsePipes(new ValidationPipe())
+    async getCourseRatings(@Query('courseId') courseId: string) {
+        const response = await this.progressService.getCourseRatings(courseId);
+        if(response === null) {
+            throw new HttpException("No ratings found for this course", HttpStatus.NOT_FOUND);
+        }
+        return response;
+    }
+
     //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     @Get('averageScore/instructor')

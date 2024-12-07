@@ -5,7 +5,7 @@ import { Course } from './courses.schema'; // Import Course schema
 
 export type ProgressDocument = Progress & Document;
 
-@Schema({collection: 'Progress'})
+@Schema()
 export class Progress {
 
   @Prop({type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true})

@@ -1,4 +1,4 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Progress } from '../Schemas/progress.schema';
@@ -7,6 +7,8 @@ import { Course } from 'src/Schemas/courses.schema';
 import { Module } from 'src/Schemas/modules.schema';
 import { Quiz } from 'src/Schemas/quizzes.schema';
 import { User } from 'src/Schemas/users.schema';
+import { Response } from 'src/Schemas/responses.schema';
+import { Rating } from 'src/Schemas/ratings.schema';
 
 @Injectable()
 export class ProgressService {
@@ -16,7 +18,8 @@ export class ProgressService {
         @InjectModel('Course') private courseModel: Model<Course>,
         @InjectModel('Module') private moduleModel: Model<Module>,
         @InjectModel('Quiz') private quizModel: Model<Quiz>,
-        @InjectModel('User') private userModel: Model<User>) {}
+        @InjectModel('User') private userModel: Model<User>,
+        @InjectModel('Rating') private ratingModel: Model<Rating>) {}
 
     /////////////////////////////////////  STUDENT APIS //////////////////////////////////////
 
@@ -46,7 +49,7 @@ export class ProgressService {
         return progress.map(progress => progress.completion_percentage);
     }
 
-    async getAverageScoresAllCourses(studentId: string): Promise<any[]> {
+    async getAverageScoresAllCourses(studentId: string): Promise<any> {
         const responses = await this.responsesModel.find({ user_id: studentId }).exec();
         const responsesJSON = JSON.parse(JSON.stringify(responses));
         if(responsesJSON.length === 0){
@@ -85,8 +88,18 @@ export class ProgressService {
             const averageScore = totalScore / scores.length;
             courseScores.push({course: course.title, averageScore: averageScore});
         });
+
+        let response = {
+            student:{},
+            courseScores: courseScores
+        };
+
+        const student = await this.userModel.findOne({ _id: studentId }).exec();
+        const gpa = student.gpa;
+
+        response.student = { id: studentId, gpa: gpa};
     
-        return courseScores;
+        return response;
     }
 
     async getEngagementTrend(studentId: string, courseId: string): Promise<any> {
@@ -97,7 +110,7 @@ export class ProgressService {
             throw new NotFoundException("No modules with this course id were found")
         }
         
-        const allQuizzes = await this.quizModel.find({module_id: {$in: moduleIds}});
+        const allQuizzes = await this.quizModel.find({module_id: {$in: moduleIds}}).exec();
         const allQuizzesJSON = JSON.parse(JSON.stringify(allQuizzes));
         const quizIds = allQuizzesJSON.map(quiz => quiz._id);
         if(allQuizzesJSON.length === 0){
@@ -108,7 +121,7 @@ export class ProgressService {
         let  matched = 0;
 
         quizIds.forEach( async quiz => {
-            const matchTest = await this.responsesModel.find({ quiz_id: quiz }).exec()
+            const matchTest = await this.responsesModel.find({ quiz_id: quiz }).exec();
             if(matchTest.length !== 0){
                 matched++;
             }
@@ -119,10 +132,66 @@ export class ProgressService {
         return {"quizzesLeft":quizzesLeft};
     }
 
+    async rateInstructor(studentId: string, courseId: string, rating: number): Promise<Rating> {
+        const course = await this.courseModel.findOne({ _id: courseId }).exec();
+        const instructor = await this.userModel.findOne({ _id: course.created_by}).exec();
+        if(instructor === null){
+            throw new NotFoundException("This course has no instructor");
+        }
+
+        const totalModules = await this.moduleModel.countDocuments({ course_id: courseId }).exec();
+
+        const responses = await this.responsesModel.find({ user_id: studentId });
+        const responsesJSON = JSON.parse(JSON.stringify(responses));
+        if(responsesJSON.length === 0){
+            throw new NotFoundException("This student doesn't have any responses saved (FK problem)")
+        }
+
+        const quizIds = responsesJSON.map(response => response.quiz_id);
+        const quizzes = await this.quizModel.find({ _id: { $in: quizIds } }).exec();
+        const quizzesJSON = JSON.parse(JSON.stringify(quizzes));
+        if(quizzesJSON.length === 0){
+            throw new NotFoundException("This quiz id cannot be found in the Quizzes collection (FK problem)")
+        }
+
+        const moduleIds = quizzesJSON.map(quiz => quiz.module_id)
+        const modulesDone = await this.moduleModel.countDocuments({ _id: { $in: moduleIds }, course_id: courseId}).exec();
+
+        if(totalModules != modulesDone){
+            throw new BadRequestException("Student has not finished the course yet");
+        }
+
+        const insertion = {
+            rating: rating,
+            rater_id: studentId,
+            ratee_id: instructor._id
+        };
+
+        return await this.ratingModel.create(insertion);
+        
+    }
+
+    async rateModule(studentId: string, moduleId: string, rating: number): Promise<Rating> {
+        const module = await this.moduleModel.findOne({ _id: moduleId }).exec();
+        console.log(module);
+        if(module === null){
+            throw new NotFoundException("No record of this module was found");
+        }
+
+        const insertion = {
+            rating: rating,
+            rater_id: studentId,
+            module_id: moduleId
+        };
+
+        return await this.ratingModel.create(insertion);
+
+    }
+
     //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     async getAverageScores(instructorId: string): Promise<any[]> {
-        const courses = await this.courseModel.find({ created_by: instructorId });
+        const courses = await this.courseModel.find({ created_by: instructorId }).exec();
         const coursesJSON = JSON.parse(JSON.stringify(courses));
         const coursesArray = coursesJSON.map(course => [course.title, course._id]);
     
@@ -133,7 +202,7 @@ export class ProgressService {
         let averageScores = [];
     
         for (const course of coursesArray) {
-            const modules = await this.moduleModel.find({ course_id: course[1] });
+            const modules = await this.moduleModel.find({ course_id: course[1] }).exec();
             const modulesJSON = JSON.parse(JSON.stringify(modules));
             const moduleIds = modulesJSON.map(module => module._id);
             
@@ -141,7 +210,7 @@ export class ProgressService {
                 throw new NotFoundException("This course has no modules");
             }
     
-            const quizzes = await this.quizModel.find({ module_id: { $in: moduleIds } });
+            const quizzes = await this.quizModel.find({ module_id: { $in: moduleIds } }).exec();
             const quizzesJSON = JSON.parse(JSON.stringify(quizzes));
             const quizIds = quizzesJSON.map(quiz => quiz._id);
     
@@ -150,7 +219,7 @@ export class ProgressService {
                 continue;
             }
     
-            const responses = await this.responsesModel.find({ quiz_id: { $in: quizIds } });
+            const responses = await this.responsesModel.find({ quiz_id: { $in: quizIds } }).exec();
             const responsesJSON = JSON.parse(JSON.stringify(responses));
             const scores = responsesJSON.map(response => response.score);
     
@@ -171,11 +240,11 @@ export class ProgressService {
     
 
     async getStudentEngagementReport(courseId: string): Promise<any> {
-        const studentsCount = await this.progressModel.countDocuments({ course_id: courseId });
+        const studentsCount = await this.progressModel.countDocuments({ course_id: courseId }).exec();
 
-        const completionCount = await this.progressModel.countDocuments({ course_id: courseId, completion_percentage: 100 });
+        const completionCount = await this.progressModel.countDocuments({ course_id: courseId, completion_percentage: 100 }).exec();
 
-        const enrolled = await this.progressModel.find({ course_id: courseId});
+        const enrolled = await this.progressModel.find({ course_id: courseId}).exec();
         const enrolledJSON = JSON.parse(JSON.stringify(enrolled));
         const enrolledIds = enrolledJSON.map(enrolled => enrolled.user_id);
 
@@ -183,21 +252,21 @@ export class ProgressService {
         const enrolledAvg = await this.userModel.countDocuments({ _id: { $in: enrolledIds }, gpa: { $gte: 2, $lt: 3 } });
         const enrolledAboveAvg = await this.userModel.countDocuments({ _id: { $in: enrolledIds }, gpa: { $gte: 3 } })
 
-        const modules = await this.moduleModel.find({ course_id: courseId });
+        const modules = await this.moduleModel.find({ course_id: courseId }).exec();
         const modulesJSON = JSON.parse(JSON.stringify(modules));
         const moduleIds = modulesJSON.map(module => module._id);
         if(modulesJSON.length === 0){
             throw new NotFoundException("This course has no modules")
         }
 
-        const quizzes = await this.quizModel.find({ module_id: { $in: moduleIds }});
+        const quizzes = await this.quizModel.find({ module_id: { $in: moduleIds }}).exec();
         const quizzesJSON = JSON.parse(JSON.stringify(quizzes));
         const quizIds = quizzesJSON.map(quiz => quiz._id);
         if(quizzesJSON.lenght === 0){
             throw new NotFoundException("This module has no quizzes")
         }
 
-        const responses = await this.responsesModel.find({ quiz_id: { $in: quizIds}});
+        const responses = await this.responsesModel.find({ quiz_id: { $in: quizIds}}).exec();
         const responsesJSON = JSON.parse(JSON.stringify(responses));
         const scores = responsesJSON.map(response => response.score);
         if(responsesJSON.lenght === 0){
@@ -220,5 +289,28 @@ export class ProgressService {
 
         return report;
     }
-    
+
+    async getCourseRatings(courseId: string): Promise<any> {
+        const modules = await this.moduleModel.find({ course_id: courseId }).exec();
+        const modulesJSON = JSON.parse(JSON.stringify(modules));
+        const moduleIds = modulesJSON.map(module => module._id);
+
+        const ratings = await this.ratingModel.find({ module_id: { $in: moduleIds }});
+        const ratingsJSON = JSON.parse(JSON.stringify(ratings));
+        const scores = ratingsJSON.map(rating => rating.rating);
+
+        const sum = scores.reduce((acc, cur) => acc = acc + cur, 0);
+        const averageRating = sum/scores.length;
+
+        const course = await this.courseModel.findOne({ _id: courseId }).exec();
+        const courseTitle = course.title;
+
+        const response = {
+            course_id: courseId,
+            course_title: courseTitle,
+            averageRating: averageRating
+        }
+
+        return response;
+    }
 }
