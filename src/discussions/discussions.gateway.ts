@@ -43,6 +43,12 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // POST EVENTS
 
+  /*
+  MAMDOUH:
+  WE SHOULD USE GUARDS FOR POST CREATION TO CHECK THE ROLE OF THE USER
+  ONLY STUDENTS CAN CREATE POSTS 
+  */
+
   // Listen for new post creation
   @SubscribeMessage('post:create')
   async handleCreatePost(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreatePostDto) {
@@ -65,6 +71,13 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
     }
   }
+
+  //***
+
+  /*
+   MAMDOUH:
+   WE SHOULD USE GUARDS FOR POST DELETION TO CHECK THE ROLE OF THE USER
+  */
 
   // Listen for post deletion
   @SubscribeMessage('post:delete')
@@ -110,6 +123,14 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   //COMMENT EVENTS
 
+  //***
+
+  /*
+  MAMDOUH:
+  WE SHOULD USE GUARDS FOR COMMENT CREATION TO CHECK THE ROLE OF THE USER
+ (BOTH STUDENTS AND INSTRUCTORS CAN CREATE COMMENTS)
+  */
+
   // Listen for new comment creation
   @SubscribeMessage('comment:create')
   async handleCreateComment(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateCommentDto) {
@@ -126,7 +147,11 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
       // NOTIFICATION HANDLING FOR REPLY NOTIFICATIONS TO POST AUTHOR
       const post = await this.discussionsService.getPostById(payload.post);
-      this.server.to(`user_${post.author}`).emit('notification', { message: 'You have a new reply to your post', data: post.title });
+
+      // Emit the notification only if the comment author is not the post author
+      if(comment.author.toString() !== post.author.toString())
+        {this.server.to(`user_${post.author}`).emit('notification', { message: 'You have a new reply to your post', data: post.title });}
+    
       
      this.logger.log(`Post author: ${post.author.toString()}`);
 
@@ -137,9 +162,15 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
+  //*** 
+   
+  /*
+   MAMDOUH:
+   WE SHOULD USE GUARDS FOR COMMENT DELETION TO CHECK THE ROLE OF THE USER
+  */
+
   // Listen for comment deletion
   @SubscribeMessage('comment:delete')
-  //@UseGuards(RolesGuard) (SHOULD USE A GUARD TO CHECK THE ROLE OF THE USER) (MAMDOOOOOO)
   async handleDeleteComment(@ConnectedSocket() client: Socket, @MessageBody() { commentId, role, userId }: { commentId: string, role: string, userId: string }) {
     try {
 

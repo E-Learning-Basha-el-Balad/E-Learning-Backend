@@ -1,6 +1,8 @@
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -13,14 +15,34 @@ import { ValidateIdDto } from 'src/discussions/dto/validate-id-dto';
 
 
 @WebSocketGateway({ cors: true, namespace: '/ws/announcement' })
-export class AnnouncementsGateway {
+export class AnnouncementsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
-  constructor(private readonly announcementsService: AnnouncementsService) {}
-
+  // Global server instance to emit events to all connected clients
   @WebSocketServer() server: Server;
 
+  // Logger instance for testing and loggin events
   private readonly logger = new Logger(AnnouncementsGateway.name);
 
+  // Injecting the announcements service to handle the business logic
+  constructor(private readonly announcementsService: AnnouncementsService) {}
+
+
+  // CONNECT/DISCONNECT EVENTS
+
+  // Connection event
+  handleConnection(@ConnectedSocket() client: Socket) {
+    this.logger.log(`Client connected: ${client.id}`);
+    client.emit('connected', { message: 'Welcome to the Discussion Forum' });
+  }
+
+  // Disconnection event
+  handleDisconnect(@ConnectedSocket() client: Socket) {
+    this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  // ***
+  // CREATE ANNOUNCEMENT (EXPLICITELY FOR INSTRUCTORS)
+  // NEED A GUARD (MAMDO) TO CHECK IF THE USER IS AN INSTRUCTOR
   @SubscribeMessage('announcement:create')
   async handleCreateAnnouncement(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateAnnouncementDto) {
     try {
@@ -31,7 +53,7 @@ export class AnnouncementsGateway {
       // Emit the created post to the corresponding course room of the post creator
       this.server.to(`course_${payload.course}`).emit('announcement:created', announcement);
 
-      client.to(`course_${payload.course}`).emit('notification', { message: 'You have a new reply to your post', data: announcement.content });
+      client.to(`course_${payload.course}`).emit('notification', { message: `Announcement created in course_${payload.course}`, data: announcement.content });
 
       // Log the event for debugging
       this.logger.log(`Announcement created in course_${payload.course}`);
@@ -44,6 +66,10 @@ export class AnnouncementsGateway {
 
     }
   }
+
+  // ***
+  // DELETE ANNOUNCEMENT (EXPLICITELY FOR INSTRUCTORS)
+  // NEED A GUARD (MAMDO) TO CHECK IF THE USER IS AN INSTRUCTOR
 
   @SubscribeMessage('announcement:delete')
   async handleDeleteAnnouncement(@ConnectedSocket() client: Socket,@MessageBody() announcementId: string){
