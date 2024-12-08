@@ -1,7 +1,7 @@
 import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
 
 
-export class CreateAnnouncementDto{
+export class CreatePlatformAnnouncementDto{
     
     @IsNotEmpty()
     @IsString()
@@ -9,10 +9,7 @@ export class CreateAnnouncementDto{
     
     @IsNotEmpty()
     @IsMongoId()
-    instructor: string;
-    
-    @IsNotEmpty()
-    @IsMongoId()
-    course: string;
+    admin: string;
+   
 
 }

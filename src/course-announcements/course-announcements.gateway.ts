@@ -8,23 +8,38 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { AnnouncementsService } from './announcements.service';
-import { CreateAnnouncementDto } from './dto/create-announcement.dto';
+import { CourseAnnouncementsService } from './course-announcements.service';
+import { CreateCourseAnnouncementDto } from './dto/create-course-announcement.dto';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ValidateIdDto } from 'src/discussions/dto/validate-id-dto';
 
+// ANY ACTION CREATION/DELETION IS RESTRICTED TO INSTRUCTORS ONLY
 
-@WebSocketGateway({ cors: true, namespace: '/ws/announcement' })
-export class AnnouncementsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+/*
+  This gateway is responsible for handling Instructor created Course specific announcements.
+  
+    1) Announcement Creation:
+  
+    1-Created Announcements are broadcasted to all connected clients in the corresponding course room
+    2-Notifications are broadcasted to all connected clients in the corresponding course room about the new announcement
+  
+    2) Announcement Deletion:
+  
+    -Deleted Announcements are broadcasted to all connected clients in the corresponding course room
+*/
+
+
+@WebSocketGateway({ cors: true, namespace: '/ws/course/announcement' })
+export class CourseAnnouncementsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // Global server instance to emit events to all connected clients
   @WebSocketServer() server: Server;
 
   // Logger instance for testing and loggin events
-  private readonly logger = new Logger(AnnouncementsGateway.name);
+  private readonly logger = new Logger(CourseAnnouncementsGateway.name);
 
   // Injecting the announcements service to handle the business logic
-  constructor(private readonly announcementsService: AnnouncementsService) {}
+  constructor(private readonly announcementsService: CourseAnnouncementsService) {}
 
 
   // CONNECT/DISCONNECT EVENTS
@@ -42,9 +57,10 @@ export class AnnouncementsGateway implements OnGatewayConnection, OnGatewayDisco
 
   // ***
   // CREATE ANNOUNCEMENT (EXPLICITELY FOR INSTRUCTORS)
-  // NEED A GUARD (MAMDO) TO CHECK IF THE USER IS AN INSTRUCTOR
+  // NEED A GUARD (MAMDOUH) TO CHECK IF THE USER IS AN INSTRUCTOR
+  
   @SubscribeMessage('announcement:create')
-  async handleCreateAnnouncement(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateAnnouncementDto) {
+  async handleCreateAnnouncement(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateCourseAnnouncementDto) {
     try {
 
       // Handle the creation logic from the service
@@ -69,7 +85,7 @@ export class AnnouncementsGateway implements OnGatewayConnection, OnGatewayDisco
 
   // ***
   // DELETE ANNOUNCEMENT (EXPLICITELY FOR INSTRUCTORS)
-  // NEED A GUARD (MAMDO) TO CHECK IF THE USER IS AN INSTRUCTOR
+  // NEED A GUARD (MAMDOUH) TO CHECK IF THE USER IS AN INSTRUCTOR
 
   @SubscribeMessage('announcement:delete')
   async handleDeleteAnnouncement(@ConnectedSocket() client: Socket,@MessageBody() announcementId: string){

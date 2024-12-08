@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AnnouncementsService } from './announcements.service';
+import { CourseAnnouncementsService } from './course-announcements.service';
 
 
 
 
 @Controller('announcements')
-export class AnnouncementsController {
-    constructor(private announcementsService: AnnouncementsService) {}
+export class CourseAnnouncementsController {
+    constructor(private announcementsService: CourseAnnouncementsService) {}
 
      /*
         Only 1 API endpoint is needed for the announcements module:

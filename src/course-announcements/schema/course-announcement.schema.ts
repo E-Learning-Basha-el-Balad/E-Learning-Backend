@@ -5,10 +5,10 @@ import { Course } from "src/Schemas/courses.schema";
 import { User } from "src/Schemas/users.schema";
 
 
-export type AnnouncementDocument = Announcement & Document;
+export type CourseAnnouncementDocument = CourseAnnouncement & Document;
 
-@Schema({ timestamps: true })
-export class Announcement {
+@Schema({ timestamps: true , collection: 'course_announcements' })
+export class CourseAnnouncement {
     
     @Prop({required : true})
     content: string;
@@ -21,5 +21,5 @@ export class Announcement {
 
 }
 
-export const AnnouncementSchema = SchemaFactory.createForClass(Announcement);
+export const CourseAnnouncementSchema = SchemaFactory.createForClass(CourseAnnouncement);
 

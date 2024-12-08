@@ -14,6 +14,37 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ValidateIdDto } from './dto/validate-id-dto';
 
+/*
+  This gateway is responsible for handling the Discussion Forum for courses.
+
+  POSTS:
+
+  1)Post Creation: 
+
+  -Only students can create posts in the forum, posts are broadcasted to all connected clients in the corresponding course room
+
+  2)Post Deletion:
+
+  1-Admins can delete any post in the forum
+  2-Instructors can delete posts within the courses that they teach
+  3-Students can delete their own posts only
+
+  COMMENTS:
+
+  1)Comment Creation:
+
+  1-Both students and instructors can create comments on posts, comments are broadcasted to all connected clients in the corresponding post room
+  2-Notifications are broadcasted to the post author about the new comment
+
+  2)Comment Deletion:
+
+  1-Admins can delete any comment in the forum
+  2-Instructors can delete comments within the courses that they teach
+  3-Students can delete their own comments only
+
+*/
+
+
 @WebSocketGateway({ cors: true, namespace: '/forum' })
 export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
@@ -421,31 +452,6 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
     }
   }
-
-
-  // COURSES (MAY REMOVE)
-
-  // Search for enrolled coures to access the discussion forum for it
-  @SubscribeMessage('search:course')
-  async handleSearchCourses(@ConnectedSocket() client: Socket, @MessageBody() query: string) {
-    try {
-
-      // Handle the search logic from the service
-      const courses = await this.discussionsService.searchEnrolledCourses(query);
-
-      // Emit the search results to the client
-      client.emit('search:course:results', { message: 'Search results for enrolled courses', data: courses });
-
-    } catch (error) {
-
-      // Log error and emit error message to the client
-      this.logger.error(`Error searching courses: ${error.message}`, error.stack);
-      client.emit('search:course:error', { message: 'Failed to search courses', details: error.message });
-
-    }
-  }
-
-
   
 
 }
