@@ -8,8 +8,9 @@ export enum Role {
     Instructor = 'instructor',
     Admin = 'admin',
   }
-@Schema({ timestamps: true })
-export class  User extends Document{
+
+@Schema({timestamps:true})
+export class  User{
 @Prop({required:true})
 name: string;
 
@@ -22,8 +23,7 @@ password: string;
 @Prop({ required: true, enum: Role })
 role: Role;
 
-@Prop({required:false})
-profile_picture_url: string;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
