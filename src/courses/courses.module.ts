@@ -17,6 +17,8 @@ import { UserModule } from '../users/users.module';
   ],
   controllers: [CoursesController],
   providers: [CoursesService, VersioningService],
-  exports: [CoursesService],
+  exports: [CoursesService,MongooseModule],
+
+
 })
 export class CoursesModule {}
