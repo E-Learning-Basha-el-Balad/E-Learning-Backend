@@ -1,9 +1,22 @@
 import { Module } from '@nestjs/common';
-import { QuizzesService } from './quizzes.service';
 import { QuizzesController } from './quizzes.controller';
+import { QuizzesService } from './quizzes.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Quiz, QuizSchema } from '../Schemas/quizzes.schema';
+import { QuestionBank, QuestionBankSchema } from '../Schemas/questionBank.schema';
+import { User, UserSchema } from '../Schemas/users.schema';
+import { ModuleSchema } from 'src/Schemas/modules.schema';
 
 @Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Quiz.name, schema: QuizSchema }, // Use `Quiz.name` instead of 'Quiz'
+      { name: 'Module', schema: ModuleSchema },
+      { name: QuestionBank.name, schema: QuestionBankSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
+  ],
+  controllers: [QuizzesController],
   providers: [QuizzesService],
-  controllers: [QuizzesController]
 })
 export class QuizzesModule {}

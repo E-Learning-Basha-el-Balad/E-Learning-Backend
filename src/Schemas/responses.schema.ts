@@ -4,7 +4,7 @@ import { User } from './users.schema';
 import { Quiz } from './quizzes.schema';
 import { QuestionBank } from './questionBank.schema';
 
-export type ResponseDocument = Response & Document;
+export type ResponseDocument = HydratedDocument<Response>;
 
 @Schema()
 export class Response {

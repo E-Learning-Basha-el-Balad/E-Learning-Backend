@@ -17,22 +17,24 @@ import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BackupService } from './backup/backup.service';
 import { ChatModule } from './chat/chat.module';
+import { QuestionBankModule } from './questionBank/questionBank.module';
+
 const uri:string="mongodb://localhost:27017/e-learning_db"
 
 
 
-
-
 @Module({
-
   imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
   MongooseModule.forRoot(uri),
   DiscussionsModule,
   CourseAnnouncementsModule,
-  PlatformAnnouncementsModule,NotesModule,ChatModule,AuthModule
+  PlatformAnnouncementsModule,NotesModule,ChatModule,AuthModule ,QuizzesModule,
+    QuestionBankModule,
   ],
  
   controllers: [AppController],
   providers: [AppService, BackupService],
+
 })
 export class AppModule {}
+
