@@ -9,7 +9,7 @@ export type ResponseDocument = HydratedDocument<Response>;
 @Schema()
 export class Response {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  user_id: mongoose.Schema.Types.ObjectId ; // Reference to User schema
+  user_id: mongoose.Schema.Types.ObjectId; // Reference to User schema
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true })
   quiz_id: mongoose.Schema.Types.ObjectId; // Reference to Quiz schema

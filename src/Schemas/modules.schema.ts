@@ -6,8 +6,8 @@ export type ModuleDocument = HydratedDocument<Module>;
 
 @Schema()
 export class Module {
-  
-  @Prop({ type:mongoose.Schema.Types.ObjectId,required: false, ref: 'Course' })
+
+  @Prop({ type:mongoose.Schema.Types.ObjectId,required: true, ref: 'Course' })
   course_id: mongoose.Schema.Types.ObjectId; 
 
   @Prop({ required: true })

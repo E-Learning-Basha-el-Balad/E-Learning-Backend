@@ -1,7 +1,6 @@
 import mongoose, { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { QuestionBank } from './questionBank.schema';
-
 export type QuizDocument = HydratedDocument<Quiz>;
 
 @Schema()
@@ -11,7 +10,7 @@ export class Quiz {
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }], required: true })
   questions: mongoose.Types.ObjectId[] | QuestionBank[];
-
+  
   @Prop({ required: true, default: Date.now })
   created_at: Date;
 
