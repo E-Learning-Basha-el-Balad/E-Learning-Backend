@@ -38,18 +38,6 @@ export class Course {
 
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
   students: mongoose.Schema.Types.ObjectId[];
-
-  @Prop({ type: [Object], default: [] })
-  versions: any[];
-
-  @Prop({ required: true })
-  versionNumber: number;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  instructorId: mongoose.Schema.Types.ObjectId;
-
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
-  students: mongoose.Schema.Types.ObjectId[];
   
 }
 export const CourseSchema = SchemaFactory.createForClass(Course);

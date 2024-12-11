@@ -9,7 +9,6 @@ import { ModulesModule } from './modules/modules.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ProgressModule } from './progress/progress.module';
-import { MongooseModule } from '@nestjs/mongoose';
 import { DiscussionsModule } from './discussions/discussions.module';
 import { CourseAnnouncementsModule } from './course-announcements/course-announcements.module';
 import { PlatformAnnouncementsModule } from './platform-announcements/platform-announcements.module';
