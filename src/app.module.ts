@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { NotesModule } from './notes/notes.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './users/users.module';
@@ -23,7 +25,7 @@ const uri:string="mongodb://localhost:27017/e-learning_db"
   MongooseModule.forRoot('mongodb://localhost:27017/DiscussionForumV2 '),
   DiscussionsModule,
   CourseAnnouncementsModule,
-  PlatformAnnouncementsModule,
+  PlatformAnnouncementsModule,NotesModule
   ],
   
   controllers: [AppController],

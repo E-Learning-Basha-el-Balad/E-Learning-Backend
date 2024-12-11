@@ -1,3 +1,4 @@
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { getModelToken, InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -141,4 +142,3 @@ const course = await this.courseModel.findOne({
     return result;
   }
 }
-
