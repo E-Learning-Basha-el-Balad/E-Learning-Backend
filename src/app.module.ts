@@ -16,6 +16,7 @@ import { PlatformAnnouncementsModule } from './platform-announcements/platform-a
 import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BackupService } from './backup/backup.service';
+import { ChatModule } from './chat/chat.module';
 const uri:string="mongodb://localhost:27017/e-learning_db"
 
 
@@ -23,11 +24,12 @@ const uri:string="mongodb://localhost:27017/e-learning_db"
 
 
 @Module({
+
   imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
   MongooseModule.forRoot(uri),
   DiscussionsModule,
   CourseAnnouncementsModule,
-  PlatformAnnouncementsModule,NotesModule
+  PlatformAnnouncementsModule,NotesModule,ChatModule,AuthModule
   ],
  
   controllers: [AppController],
