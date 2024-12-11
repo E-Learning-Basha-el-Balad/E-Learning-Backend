@@ -9,6 +9,7 @@ import { ModulesModule } from './modules/modules.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ProgressModule } from './progress/progress.module';
+import { MongooseModule } from '@nestjs/mongoose';
 import { DiscussionsModule } from './discussions/discussions.module';
 import { CourseAnnouncementsModule } from './course-announcements/course-announcements.module';
 import { PlatformAnnouncementsModule } from './platform-announcements/platform-announcements.module';
@@ -19,14 +20,16 @@ const uri:string="mongodb://localhost:27017/e-learning_db"
 
 
 
+
+
 @Module({
   imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
-  MongooseModule.forRoot('mongodb://localhost:27017/DiscussionForumV2 '),
+  MongooseModule.forRoot(uri),
   DiscussionsModule,
   CourseAnnouncementsModule,
   PlatformAnnouncementsModule,NotesModule
   ],
-  
+ 
   controllers: [AppController],
   providers: [AppService, BackupService],
 })

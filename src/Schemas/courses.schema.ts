@@ -11,6 +11,7 @@ export enum DifficultyLevel {
 
 @Schema({ timestamps: true })
 export class Course {
+
   @Prop({ required: true })
   title: string;
 
