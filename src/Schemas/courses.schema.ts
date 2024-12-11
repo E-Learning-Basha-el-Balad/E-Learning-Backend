@@ -3,34 +3,53 @@ import mongoose, { Document } from 'mongoose';
 
 export type CourseDocument = Course & Document;
 
-enum DifficultyLevel {
-  Beginner = 'Beginner',
-  Intermediate = 'Intermediate',
-  Advanced = 'Advanced',
+export enum DifficultyLevel {
+  Beginner = 'beginner',
+  Intermediate = 'intermediate',
+  Advanced = 'advanced'
 }
 
-@Schema()
+@Schema({ timestamps: true })
 export class Course {
-  @Prop({ required: true, unique: true })
-  course_id: mongoose.Schema.Types.ObjectId; 
+  @Prop({ required: true })
+  title: string;
 
   @Prop({ required: true })
-  title: string; 
+  description: string;
 
   @Prop({ required: true })
-  description: string; 
-
-  @Prop({ required: true })
-  category: string; 
+  category: string;
 
   @Prop({ required: true, enum: DifficultyLevel })
-  level: DifficultyLevel; 
+  level: DifficultyLevel;
 
   @Prop({ required: true })
-  created_by: string; 
+  created_by: string;
+
+  @Prop({ type: [Object], default: [] })
+  versions: any[];
 
   @Prop({ required: true })
-  created_at: Date; 
+  versionNumber: number;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  instructorId: mongoose.Schema.Types.ObjectId;
+  
+
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
+  students: mongoose.Schema.Types.ObjectId[];
+
+  @Prop({ type: [Object], default: [] })
+  versions: any[];
+
+  @Prop({ required: true })
+  versionNumber: number;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  instructorId: mongoose.Schema.Types.ObjectId;
+
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
+  students: mongoose.Schema.Types.ObjectId[];
+  
 }
-
 export const CourseSchema = SchemaFactory.createForClass(Course);
