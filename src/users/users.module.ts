@@ -7,8 +7,7 @@ import { User, UserSchema } from 'src/Schemas/users.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-  ],
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),],
   providers: [UsersService],
   controllers: [UsersController],
   exports: [MongooseModule,UsersService] // Export MongooseModule to make UserSchema available

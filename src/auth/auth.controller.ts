@@ -16,7 +16,6 @@ export class AuthController {
         return res.json(result);
     }
 
-
     @Post('register')
     @UsePipes(new ValidationPipe())
     register(@Body() userData:CreateUserDTO){

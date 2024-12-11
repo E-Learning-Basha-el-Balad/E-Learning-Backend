@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { CreateUserDTO } from 'src/users/CreateUser.dto';
 import { LoginUserDTO } from 'src/users/loginUser.dto';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { LogsService } from '../logging/logs.service';
 
@@ -34,15 +34,21 @@ export class AuthService {
         return { id: user._id, role: user.role };
     }
 
+
     async genToken(user){
         const tokenPayload={
-            id:user._id,
+            sub: user._id,
             role:user.role
         }
+
+        const accessToken = await this.jwtService.signAsync(tokenPayload)
+
+        return {accessToken, id:user._id, role:user.role}
 
         const accessToken = await this.jwtService.signAsync(tokenPayload);
 
         return { accessToken, id: user._id, role: user.role };
+
     }
 
     async register(userData: CreateUserDTO) {
