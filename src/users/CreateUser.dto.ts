@@ -15,7 +15,7 @@ export class CreateUserDTO {
   readonly password: string;
 
   @IsNotEmpty()
-  @IsEnum(['student', 'instructor', 'admin'], { message: 'Role must be either student, instructor, or admin' })
+  @IsEnum(['student', 'instructor'], { message: 'Role must be either student or instructor' })
   readonly role: string;
 
 }
