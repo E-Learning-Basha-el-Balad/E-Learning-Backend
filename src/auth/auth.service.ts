@@ -28,25 +28,23 @@ export class AuthService {
         const token = await this.genToken(user);
         res.cookie('jwt', token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production', 
+          secure: false, 
           maxAge: 24 * 60 * 60 * 1000,
-          sameSite: 'strict',
+          sameSite: 'none',
       });
 
       this.logger.log(`User Logged successfully with ID: ${user._id}`);
+      res.status(200).json({
+        message: 'Login successful',
+        userId: user._id,
+    });
     }
       catch(err){
 
-        this.logger.error(`User Log in Error`);
+        this.logger.error(`Login Error: ${err.message}`);
+        res.status(401).json({ message: 'Invalid credentials' });
 
       }
-        
-
-      
-        
-        
-        
-        return "User Log in Sucess";
     }
 
 
