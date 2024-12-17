@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException,Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { CreateUserDTO } from 'src/users/CreateUser.dto';
@@ -9,6 +9,7 @@ import { LogsService } from '../logging/logs.service';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
     constructor(
         private UsersService: UsersService,
         private jwtService: JwtService,
@@ -16,6 +17,7 @@ export class AuthService {
     ) {}
 
     async authenticateLogin(loginCreds: LoginUserDTO, res: Response) {
+      try{
         const user = await this.UsersService.getUserByEmail(loginCreds.email);
         
         if (!user || !(await bcrypt.compare(loginCreds.password, user.password))) {
@@ -24,14 +26,25 @@ export class AuthService {
         }
 
         const token = await this.genToken(user);
-        res.cookie('jwt', token.accessToken, {
-            httpOnly: true,//prevents xss
-            secure: process.env.NODE_ENV === 'production', // secure cookies that are sent over https only for production and not for development
-            maxAge: 24 * 60 * 60 * 1000,// 1000 ms = 1 second, 60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day
-            sameSite: 'strict',//prevents csrf
-        });
-        
-        return { id: user._id, role: user.role };
+        res.cookie('jwt', token, {
+          httpOnly: true,
+          secure: false, 
+          maxAge: 24 * 60 * 60 * 1000,
+          sameSite: 'none',
+      });
+
+      this.logger.log(`User Logged successfully with ID: ${user._id}`);
+      res.status(200).json({
+        message: 'Login successful',
+        userId: user._id,
+    });
+    }
+      catch(err){
+
+        this.logger.error(`Login Error: ${err.message}`);
+        res.status(401).json({ message: 'Invalid credentials' });
+
+      }
     }
 
 
@@ -49,18 +62,36 @@ export class AuthService {
     }
 
     async register(userData: CreateUserDTO) {
-        const existingUser = await this.UsersService.getUserByEmail(userData.email);
-        if (existingUser) {
+        try {
+          
+          const existingUser = await this.UsersService.getUserByEmail(userData.email);
+          if (existingUser) {
             throw new ConflictException('A user with this email already exists.');
-        }
+          }
     
-        const hashedPassword = await bcrypt.hash(userData.password, 12);
+          
+          const hashedPassword = await bcrypt.hash(userData.password, 12);
     
-        const newUser = {
-            ...userData, 
+          
+          const newUser = {
+            ...userData,
             password: hashedPassword,
-        };
+          };
     
-        return await this.UsersService.register(newUser);
-    }
+    
+          const user = await this.UsersService.register(newUser);
+    
+          
+          this.logger.log(`User registered successfully with ID: ${user._id}`);
+          
+          
+          return user;
+        } catch (err) {
+          
+          this.logger.error('Error during user registration', err.stack);
+    
+          
+          throw err;
+        }
+}
 }

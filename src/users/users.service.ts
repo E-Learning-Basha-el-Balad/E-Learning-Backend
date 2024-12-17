@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException,Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../Schemas/users.schema';
 import { Model } from 'mongoose';
@@ -8,11 +8,10 @@ import { ConflictException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
-  
-    // Define the rest of the methods as needed
   async getUserByEmail(email:string):Promise<User | null>{
     const user = await this.userModel.findOne({email:email})
     
@@ -25,9 +24,20 @@ export class UsersService {
   
 
   async register(userData: CreateUserDTO): Promise<UserDocument> {
-    
+    try{
       const newUser = new this.userModel(userData);
-      return await newUser.save();
+
+      const savedUser= await newUser.save();
+      this.logger.log(`User registered successfully: ${savedUser._id}`)
+      return savedUser
+    }
+    catch(err){
+      this.logger.error('Error during user registration', err.stack);
+      throw err;
+
+    }
+      
+      
     }
   }
 
