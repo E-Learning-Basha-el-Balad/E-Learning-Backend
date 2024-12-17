@@ -149,7 +149,7 @@ export class DiscussionsService {
         const comment = await this.commentModel.findById(commentId);
         const post = await this.postModel.findById(comment.post);
 
-        if (post.course.instructorId.toString() === instructorId) {
+        if (post.course.userId.toString() === instructorId) {
             return this.commentModel.findByIdAndDelete(commentId);
         }
         throw new Error('Unauthorized');
