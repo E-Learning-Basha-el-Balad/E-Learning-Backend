@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException,Logger } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException,Logger , NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { CreateUserDTO } from 'src/users/CreateUser.dto';
@@ -27,10 +27,10 @@ export class AuthService {
 
         const token = await this.genToken(user);
         res.cookie('jwt', token, {
-          httpOnly: true,
-          secure: false, 
+          httpOnly: false,
+          secure: process.env.NODE_ENV=='production', 
           maxAge: 24 * 60 * 60 * 1000,
-          sameSite: 'none',
+          sameSite: 'lax',
       });
 
       this.logger.log(`User Logged successfully with ID: ${user._id}`);
@@ -56,7 +56,7 @@ export class AuthService {
 
       const accessToken = await this.jwtService.signAsync(tokenPayload);
 
-      return accessToken;
+      return {accessToken};
   }
 
     async register(userData: CreateUserDTO) {

@@ -1,13 +1,18 @@
-import { Body, Controller, Post, Res, UsePipes, ValidationPipe } from '@nestjs/common';
-import { Response } from 'express';
+import { Body, Controller, Get, Post, Req, Res, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Response , Request } from 'express';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import { LoginUserDTO } from '../users/loginUser.dto';
 import { CreateUserDTO } from '../users/CreateUser.dto';
+import { AuthGuard } from './auth.guard'
+import { request } from 'http';
 
 @Controller('auth')
 export class AuthController {
 
-    constructor(private readonly AuthService:AuthService){}
+    constructor(private readonly AuthService:AuthService,
+        private readonly UsersService:UsersService
+    ){}
 
     @Post('login')
     @UsePipes(new ValidationPipe())
@@ -18,9 +23,16 @@ export class AuthController {
 
     @Post('register')
     @UsePipes(new ValidationPipe())
-    register(@Body() userData:CreateUserDTO){
-        return this.AuthService.register(userData)
+    async register(@Body() userData:CreateUserDTO){
+        return await this.AuthService.register(userData)
         
     }
+    @UseGuards(AuthGuard)
+    @Get('userData')
+    async test(@Req() req , @Res() res){
+        const user = await this.UsersService.getUserById(req.user.sub)
+        return  res.json(user)
+    }
+
     
 }
