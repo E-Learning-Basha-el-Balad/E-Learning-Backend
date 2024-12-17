@@ -48,18 +48,16 @@ export class AuthService {
     }
 
 
-    async genToken(user){
-        const tokenPayload={
-            sub: user._id,
-            role:user.role
-        }
+    async genToken(user) {
+      const tokenPayload = {
+          sub: user._id,
+          role: user.role
+      };
 
-        const accessToken = await this.jwtService.signAsync(tokenPayload)
+      const accessToken = await this.jwtService.signAsync(tokenPayload);
 
-        return {accessToken, id:user._id, role:user.role}
-
-
-    }
+      return accessToken;
+  }
 
     async register(userData: CreateUserDTO) {
         try {
@@ -70,7 +68,7 @@ export class AuthService {
           }
     
           
-          const hashedPassword = await bcrypt.hash(userData.password, 12);
+          const hashedPassword = await bcrypt.hash(userData.password, 10);
     
           
           const newUser = {
