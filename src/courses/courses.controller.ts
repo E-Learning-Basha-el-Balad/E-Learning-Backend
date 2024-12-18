@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query,Req, Res, BadRequestException, NotFoundException , UseGuards } from '@nestjs/common';
 import { VersioningService } from './versioning/versioning.service';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -6,6 +6,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { Course, DifficultyLevel } from '../Schemas/courses.schema';
 import { User } from '../Schemas/users.schema';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
+import { AuthGuard } from '../auth/auth.guard'
 
 @Controller('courses')
 export class CoursesController {
@@ -14,15 +15,19 @@ export class CoursesController {
     private versioningService: VersioningService,
   ) {}
 
+
+  
+
   @Post('create')
   async createCourse(@Body() createCourseDto: CreateCourseDto): Promise<any> {
     return this.coursesService.createCourse(createCourseDto);
   }
 
+  @UseGuards(AuthGuard)
   @Post('/enroll')
-  async enrollStudent(@Body() enrollDto: EnrollStudentDto): Promise<Course> {
-    const { courseId, studentId, instructorId } = enrollDto;
-    return this.coursesService.enrollStudent(courseId, studentId, instructorId);
+  async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
+    const { courseId} = enrollDto;
+    return await this.coursesService.enrollInCourse(courseId,req.user.sub);
   }
 
   @Get('Allcourses')

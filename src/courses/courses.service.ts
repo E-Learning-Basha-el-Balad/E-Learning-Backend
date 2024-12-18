@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException,Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
@@ -10,6 +10,7 @@ import { VersioningService } from './versioning/versioning.service';
 
 @Injectable()
 export class CoursesService {
+    private readonly logger = new Logger(CoursesService.name);
   constructor(
     @InjectModel('Course') private courseModel: Model<CourseDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
@@ -59,6 +60,33 @@ export class CoursesService {
     course.students.push(studentObjectId);
     await course.save();
     return course;
+  }
+
+
+  async enrollInCourse(courseId: string, studentId: string) {
+    const isEnrolled = await this.courseModel.findOne({
+      _id: courseId,
+      students: { $in: [studentId] }
+    });
+  
+    if (isEnrolled) {
+      // If the student is already enrolled, throw a ConflictException
+      throw new ConflictException(`Student with ID "${studentId}" is already enrolled in this course`);
+    } else {
+      // Otherwise, push the student ID into the students array in the course document
+      await this.courseModel.updateOne(
+        { _id: courseId },
+        { $push: { students: studentId } }
+      );
+      
+      // Log the successful enrollment
+      this.logger.log(`Student with ID "${studentId}" successfully enrolled in course ${courseId}`);
+    }
+  
+    // Return a success message in JSON format after enrollment
+    return {
+      message: `Student with ID "${studentId}" successfully enrolled in course ${courseId}` // HTTP status code for Created
+    };
   }
 
   // GET Methods

@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { LoginUserDTO } from '../users/loginUser.dto';
 import { CreateUserDTO } from '../users/CreateUser.dto';
 import { AuthGuard } from './auth.guard'
-import { request } from 'http';
+
 
 @Controller('auth')
 export class AuthController {

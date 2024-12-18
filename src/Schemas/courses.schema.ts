@@ -12,6 +12,9 @@ export enum DifficultyLevel {
 @Schema({ timestamps: true })
 export class Course {
 
+
+  _id: mongoose.Schema.Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 
