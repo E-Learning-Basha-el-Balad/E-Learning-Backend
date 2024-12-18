@@ -1,10 +1,11 @@
 import { Injectable, UnauthorizedException,Logger,NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../Schemas/users.schema';
-import { Model, ObjectId } from 'mongoose';
+import mongoose, { Model, ObjectId } from 'mongoose';
 import { CreateUserDTO} from './CreateUser.dto';
 import { LoginUserDTO } from './loginUser.dto';
 import { ConflictException } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class UsersService {
@@ -33,6 +34,25 @@ export class UsersService {
     
     return user
   }
+
+
+  async getUserNamebyID(id:any):Promise<string>{
+
+    const name = await this.userModel.findOne({_id:id.id})
+    if (!name){  
+      throw new NotFoundException('User not found');
+   }
+
+   
+
+
+   return name.name
+
+  }
+
+  
+
+  
 
   
 

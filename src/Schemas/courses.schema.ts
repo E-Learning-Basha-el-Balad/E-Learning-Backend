@@ -33,8 +33,8 @@ export class Course {
   @Prop({ required: true })
   versionNumber: number;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', required:true})
-  userId:  mongoose.Types.ObjectId;
+  @Prop({ ref: 'User', required:true})
+  userId:  mongoose.Schema.Types.ObjectId;
   
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
   students: mongoose.Types.ObjectId[];

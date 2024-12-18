@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
 import { Course, CourseDocument, DifficultyLevel } from '../Schemas/courses.schema';
-import { User } from '../Schemas/users.schema';
+import { User,UserDocument } from '../Schemas/users.schema';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { VersioningService } from './versioning/versioning.service';
@@ -12,7 +12,7 @@ import { VersioningService } from './versioning/versioning.service';
 export class CoursesService {
   constructor(
     @InjectModel('Course') private courseModel: Model<CourseDocument>,
-    @InjectModel('User') private userModel: Model<User>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly versioningService: VersioningService
   ) {}
 
@@ -67,8 +67,16 @@ export class CoursesService {
   }
 
   async getAllCourses(): Promise<Course[]> {
-    return this.courseModel.find({ isAvailable: true }).exec();
-  }
+    // return await this.courseModel.find({ isAvailable: true });
+    return await this.courseModel.aggregate([{
+      $lookup: {
+        from: 'users', // the collection to join with
+        localField: 'userId', // field in Courses collection
+        foreignField: '_id', // field in Users collection
+        as: 'instructor_details' // the name of the resulting array
+      }
+  }]);
+}
 
   async searchCourses(course: { title?: string; category?: string; level?: DifficultyLevel; keywords?: string[]; }): Promise<Course[]> {
     const searchCriteria: any = {};
