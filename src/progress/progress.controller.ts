@@ -1,24 +1,30 @@
-import { Body, Controller, Post, Get, UsePipes, ValidationPipe, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Body, Controller, Post, Get, UsePipes, ValidationPipe, HttpException, HttpStatus, Query, UseGuards, Req } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 import { CreateProgressDto } from './dto/CreateProgress.dto';
-
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../role/role.guard';
+import { Roles } from '../role/role.decorator';
+import { Role } from '../Schemas/users.schema';
 
 @Controller('progress')
+@UseGuards(AuthGuard, RolesGuard)
+@UsePipes(new ValidationPipe())
 export class ProgressController {
     constructor(private progressService: ProgressService) {}
 
     //////////////////////////////////////  STUDENT APIS //////////////////////////////////////
 
     @Post()
-    @UsePipes(new ValidationPipe())
+    @Roles(Role.Student)
     createProgress(@Body() createProgressDto: CreateProgressDto) {
         console.log(createProgressDto);
         return this.progressService.createProgress(createProgressDto);
     }
 
     @Get('/averageCompletionPercentage')
-    @UsePipes(new ValidationPipe())
-    async getAvgCompletionPercentage(@Body('user_id') userId: string) {
+    @Roles(Role.Student)
+    async getAvgCompletionPercentage(@Req() req: any) {
+        const userId = req.user.sub;
         const average = await this.progressService.getAvgCompletionPercentage(userId);
         if(!average == null) {
             throw new HttpException('No records found for this user', HttpStatus.NOT_FOUND);
@@ -28,10 +34,10 @@ export class ProgressController {
     }
 
     @Get('/courseId')
-    @UsePipes(new ValidationPipe())
-    async getCompletionPercentageByCourse(@Query('courseId') courseId: string, @Body() body: {studentId: string}) {
-        console.log(courseId, body.studentId);
-        const percentage = await this.progressService.getCompletionPercentageByCourse(body.studentId, courseId);
+    @Roles(Role.Student)
+    async getCompletionPercentageByCourse(@Query('courseId') courseId: string, @Req() req: any) {
+        const userId = req.user.sub;
+        const percentage = await this.progressService.getCompletionPercentageByCourse(userId, courseId);
         if(!percentage == null) {
             throw new HttpException('No progress found for this course', HttpStatus.NOT_FOUND);
         } 
@@ -40,9 +46,9 @@ export class ProgressController {
     }
 
     @Get('/averageScores/student')
-    @UsePipes(new ValidationPipe())
-    async getAverageScoresAllCourses(@Body('studentId') studentId: string) {
-        const averageScores = await this.progressService.getAverageScoresAllCourses(studentId);
+    @Roles(Role.Student)
+    async getAverageScoresAllCourses(@Req() req: any) {
+        const averageScores = await this.progressService.getAverageScoresAllCourses(req.user.sub);
         if(averageScores.length === 0) {
             throw new HttpException('No average scores found for this user', HttpStatus.NOT_FOUND);
         }
@@ -51,9 +57,9 @@ export class ProgressController {
 
     //get the number of quizzes that are left for the student to solve by course
     @Get('/engagement')
-    @UsePipes(new ValidationPipe())
-    async getEngagementTrend(@Query('courseId') courseId: string, @Body('studentId') studentId: string) {
-        const engagement = await this.progressService.getEngagementTrend(studentId, courseId);
+    @Roles(Role.Student)
+    async getEngagementTrend(@Query('courseId') courseId: string, @Req() req: any) {
+        const engagement = await this.progressService.getEngagementTrend(req.user.sub, courseId);
         if(engagement === null) {
             throw new HttpException('No engagement trends found for this user', HttpStatus.NOT_FOUND);
         }
@@ -61,19 +67,19 @@ export class ProgressController {
     }
 
     @Post('/rate-instructor')
-    @UsePipes(new ValidationPipe())
-    async rateInstructor(@Body('studentId') studentId: string, @Body('courseId') courseId: string, @Body('rating') rating: number) {
-        return await this.progressService.rateInstructor(studentId, courseId, rating);
+    @Roles(Role.Student)
+    async rateInstructor(@Req() req: any, @Body('courseId') courseId: string, @Body('rating') rating: number) {
+        return await this.progressService.rateInstructor(req.user.sub, courseId, rating);
     }
 
     @Post('/rate-module')
-    @UsePipes(new ValidationPipe())
-    async rateModule(@Body('studentId') studentId: string, @Body('moduleId') moduleId: string, @Body('rating') rating: number) {
-        return await this.progressService.rateModule(studentId, moduleId, rating);
+    @Roles(Role.Student)
+    async rateModule(@Req() req: any, @Body('moduleId') moduleId: string, @Body('rating') rating: number) {
+        return await this.progressService.rateModule(req.user.sub, moduleId, rating);
     }
 
     @Get('/course-rating')
-    @UsePipes(new ValidationPipe())
+    @Roles(Role.Student)
     async getCourseRatings(@Query('courseId') courseId: string) {
         const response = await this.progressService.getCourseRatings(courseId);
         if(response === null) {
@@ -85,9 +91,9 @@ export class ProgressController {
     //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     @Get('averageScore/instructor')
-    @UsePipes(new ValidationPipe())
-    async getAverageScores(@Body('instructorId') instructorId: string){
-        const engagements = await this.progressService.getAverageScores(instructorId);
+    @Roles(Role.Instructor)
+    async getAverageScores(@Req() req: any){
+        const engagements = await this.progressService.getAverageScores(req.user.sub);
         if(engagements.length === 0){
             throw new HttpException('No courses found', HttpStatus.NOT_FOUND);
         }
@@ -95,7 +101,7 @@ export class ProgressController {
     }
 
     @Get('/studentEngagementReport')
-    @UsePipes(new ValidationPipe())
+    @Roles(Role.Instructor)
     async getStudentEngagementReport(@Query('courseId') courseId: string){
         const report = await this.progressService.getStudentEngagementReport(courseId);
         if(report === null){
