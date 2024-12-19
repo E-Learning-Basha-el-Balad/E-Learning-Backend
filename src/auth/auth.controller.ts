@@ -33,6 +33,11 @@ export class AuthController {
         const user = await this.UsersService.getUserById(req.user.sub)
         return  res.json(user)
     }
+    @UseGuards(AuthGuard)
+    @Post('logout')
+    async logout(@Res() res: Response) {
+        await this.AuthService.logout(res);
+    }
 
     
 }
