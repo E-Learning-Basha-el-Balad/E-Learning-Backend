@@ -10,17 +10,7 @@ import mongoose, { Model, ObjectId } from 'mongoose';
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
-@Get('name/:id')
-async getName(@Param() id:any){
-    const name = this.usersService.getUserNamebyID(id)
 
-    if(!name){
-        throw new UnauthorizedException("USER DOES NOT EXIST")
-    }
-
-    return name
-
-}
 
 
 
@@ -28,7 +18,10 @@ async getName(@Param() id:any){
 // async loginUser(@Body() LoginUserDTO:LoginUserDTO){
 //     return this.usersService.login(LoginUserDTO)
 // }
-
+@Get('students')
+async getStudents(){
+    return this.usersService.getStudents()
+}
 
 // @Post('register')
 // async registerUser(@Body() CreateUserDto:CreateUserDto):Promise<UserDocument>{

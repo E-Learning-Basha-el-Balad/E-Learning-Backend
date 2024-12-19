@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException,Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException,Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
@@ -78,6 +78,11 @@ export class CoursesService {
         { _id: courseId },
         { $push: { students: studentId } }
       );
+
+      await this.userModel.updateOne(
+        { _id: studentId },
+        { $push: { enrolledCourses: courseId } }
+      )
       
       // Log the successful enrollment
       this.logger.log(`Student with ID "${studentId}" successfully enrolled in course ${courseId}`);
@@ -93,6 +98,47 @@ export class CoursesService {
   async getCourse(id: string): Promise<Course> {
     return this.courseModel.findById(id).exec();
   }
+
+  async getCoursesForInstructor(userId: string): Promise<Course[]> {
+    this.logger.log(userId)
+    return await this.courseModel.find({ userId: userId , isAvailable:true});
+  }
+
+  async inviteStudent(email:string,courseId:string){
+
+    const user = await this.userModel.findOne({email:email})
+
+    if(!user){
+      throw new ForbiddenException("EMAIL DOES NOT EXIST")
+    }
+    if(user.role.toString() != "student"){
+      throw new UnauthorizedException("USER IS NOI A STUDENT")
+
+    }
+
+    const course = await this.courseModel.findById(courseId)
+
+    if(!course){
+      throw new ForbiddenException("COURSE DOES NOT EXIST")
+    }
+
+    let students: string[] = course.students.map((student: any) => student.toString());
+
+    const id = user._id.toString()
+    if(students.includes(id)){
+      this.logger.log(`STUDENT Already Enrolled ${email}`)
+      throw new UnauthorizedException("STUDENT ALREADY ENROLLED")
+    }
+    const update= await this.courseModel.findByIdAndUpdate(courseId,{ $push: { students: user._id } })
+    this.logger.log(`STUDENT Enrolled EMAIL ${email}`)
+    return {
+      message: `STUDENT Enrolled EMAIL ${email}`
+    }
+
+  }
+
+
+  
 
   async getAllCourses(): Promise<Course[]> {
     // return await this.courseModel.find({ isAvailable: true });
@@ -205,10 +251,6 @@ export class CoursesService {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
 
-    const instructor = await this.userModel.findById(instructorId).exec();
-    if (!instructor || (instructor.role !== 'instructor' && instructor.role !== 'admin')) {
-      throw new BadRequestException('Only the course instructor or an admin can delete this course.');
-    }
 
     course.isAvailable = false;
     const updatedCourse = await course.save();

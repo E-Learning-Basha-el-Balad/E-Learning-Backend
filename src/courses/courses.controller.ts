@@ -16,6 +16,12 @@ export class CoursesController {
   ) {}
 
 
+  @Post('invite')
+  async invite(@Body('courseId') courseId :string,@Body('email') email:string){
+    return this.coursesService.inviteStudent(email,courseId)
+  }
+
+
   
 
   @Post('create')
@@ -24,7 +30,7 @@ export class CoursesController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('/enroll')
+  @Post('enroll')
   async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
     const { courseId} = enrollDto;
     return await this.coursesService.enrollInCourse(courseId,req.user.sub);
@@ -33,6 +39,12 @@ export class CoursesController {
   @Get('Allcourses')
   async getAllCourses(): Promise<Course[]> {
     return this.coursesService.getAllCourses();
+  }
+  @UseGuards(AuthGuard)
+  @Get('mycourses')
+  async getCoursesForInsructor(@Req() req:any) {
+    
+    return this.coursesService.getCoursesForInstructor(req.user.sub);
   }
 
   @Get('search')
@@ -82,12 +94,12 @@ export class CoursesController {
   ): Promise<Course> {
     return this.coursesService.updateCourse(courseId, updateCourseDto, instructorId);
   }
-
+  @UseGuards(AuthGuard)
   @Delete('delete')
   async deleteCourse(
     @Body('courseId') courseId: string,
-    @Body('instructorId') instructorId: string
+    @Req() req:any
   ): Promise<Course> {
-    return this.coursesService.deleteCourse(courseId, instructorId);
+    return this.coursesService.deleteCourse(courseId, req.user.sub);
   }
 }

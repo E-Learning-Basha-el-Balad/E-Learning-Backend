@@ -36,18 +36,8 @@ export class UsersService {
   }
 
 
-  async getUserNamebyID(id:any):Promise<string>{
-
-    const name = await this.userModel.findOne({_id:id.id})
-    if (!name){  
-      throw new NotFoundException('User not found');
-   }
-
-   
-
-
-   return name.name
-
+  async getStudents(){
+    return await this.userModel.find({role:"student"})
   }
 
   
