@@ -12,21 +12,14 @@ export class UsersController {
 
 
 
-
-
-// @Post('login')
-// async loginUser(@Body() LoginUserDTO:LoginUserDTO){
-//     return this.usersService.login(LoginUserDTO)
-// }
 @Get('students')
 async getStudents(){
     return this.usersService.getStudents()
 }
 
-// @Post('register')
-// async registerUser(@Body() CreateUserDto:CreateUserDto):Promise<UserDocument>{
-//     return this.usersService.register(CreateUserDto);
 
-// }
-
+@Get('instructors')
+async getInstructors(){
+    return this.usersService.getInstructors()
+}
 }

@@ -21,9 +21,6 @@ export class CoursesController {
     return this.coursesService.inviteStudent(email,courseId)
   }
 
-
-  
-
   @Post('create')
   async createCourse(@Body() createCourseDto: CreateCourseDto): Promise<any> {
     return this.coursesService.createCourse(createCourseDto);
@@ -69,7 +66,7 @@ export class CoursesController {
   }
 
   @Get(':id')
-  async getCourse(@Param('id') courseId: string): Promise<Course> {
+  async getCourse(@Param('id') courseId: string) : Promise<Course[]> {
     return this.coursesService.getCourse(courseId);
   }
 

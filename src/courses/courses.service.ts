@@ -8,6 +8,7 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { VersioningService } from './versioning/versioning.service';
 
+
 @Injectable()
 export class CoursesService {
     private readonly logger = new Logger(CoursesService.name);
@@ -95,9 +96,42 @@ export class CoursesService {
   }
 
   // GET Methods
-  async getCourse(id: string): Promise<Course> {
-    return this.courseModel.findById(id).exec();
+  async getCourse(id: string) : Promise<Course[]> {
+
+const course = await this.courseModel.aggregate([
+  {
+    $match: {
+      _id: new mongoose.Types.ObjectId(id) // Convert string ID to ObjectId
+    }
+  },
+  {
+    $lookup: {
+      from: 'users',
+      localField: 'userId',
+      foreignField: '_id',
+      as: 'instructor_details'
+    }
   }
+]);
+
+
+if(!course){
+  throw new BadRequestException("COURSE FETCH ERROR")
+}
+
+this.logger.log(course[0].title)
+
+return course[0]
+
+}
+
+
+
+
+
+ 
+     
+  
 
   async getCoursesForInstructor(userId: string): Promise<Course[]> {
     this.logger.log(userId)
