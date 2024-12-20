@@ -1,26 +1,31 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, HydratedDocument, mongo } from 'mongoose';
-import {Course} from './courses.schema';
+import mongoose, { Document } from 'mongoose';
+import { User } from './users.schema';
+import { Course } from './courses.schema';
+export type ModuleDocument = Document & Module;
 
-export type ModuleDocument = HydratedDocument<Module>;
-
-@Schema()
+@Schema({ timestamps: true }) // Enable automatic timestamp handling
 export class Module {
-
-  @Prop({ type:mongoose.Schema.Types.ObjectId,required: true, ref: 'Course' })
-  course_id: mongoose.Schema.Types.ObjectId; 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true })
+  course_id: mongoose.Types.ObjectId;
 
   @Prop({ required: true })
-  title: string; 
+  title: string;
 
-  @Prop({ required: false })
-  content: string; 
+  @Prop()
+  content: string;
 
-  @Prop({ required: false, type: [String] })
-  resources: string[]; 
+  @Prop()
+  filePath: string[];
 
-  @Prop({ required: false })
-  created_at: Date; 
+  //@Prop()
+  //file: Express.Multer.File;
+
+  @Prop({ type: [String] })
+  resources: string[];
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  uploaded_by: mongoose.Types.ObjectId; // Reference to the user who uploaded the module
 }
 
 export const ModuleSchema = SchemaFactory.createForClass(Module);

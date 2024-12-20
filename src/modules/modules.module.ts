@@ -1,18 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ModulesService } from './modules.service';
-import { ModulesController } from './modules.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema } from 'src/Schemas/users.schema';
-import { ModuleSchema } from 'src/Schemas/modules.schema';
+import { ModulesController } from './modules.controller';
+import { ConfigModule } from '@nestjs/config';
+import { ModulesService } from './modules.service';
+import { ModuleSchema } from '../Schemas/modules.schema';
+
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      
-       { name: Module.name, schema: ModuleSchema },
-    ]),
-  ],
+  imports: [ConfigModule.forRoot(),MongooseModule.forFeature([{ name: 'Module', schema: ModuleSchema }])],
+  controllers: [ModulesController],
   providers: [ModulesService],
-  controllers: [ModulesController]
+  exports: [ModulesService]
 })
 export class ModulesModule {}
