@@ -17,7 +17,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BackupService } from './backup/backup.service';
 import { ChatModule } from './chat/chat.module';
 import { QuestionBankModule } from './questionBank/questionBank.module';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import * as path from 'path';
 const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
 
 
@@ -29,6 +30,10 @@ const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
   CourseAnnouncementsModule,
   PlatformAnnouncementsModule,NotesModule,ChatModule,AuthModule ,QuizzesModule,
     QuestionBankModule,
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads', // URL path to access files
+    }),
   ],
  
   controllers: [AppController],
