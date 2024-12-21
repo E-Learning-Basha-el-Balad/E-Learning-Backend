@@ -185,6 +185,24 @@ return course[0]
       }
   }]);
 }
+async searchCoursesByTitle(title: string): Promise<Course[]> {
+  if (!title || title.length < 2) {
+    return [];
+  }
+
+  const searchCriteria = {
+    $or: [
+      {
+        title: { $regex: `\\b${title}`, $options: 'i' }, // Match title
+      },
+      {
+        keywords: { $in: [new RegExp(`^${title}`, 'i')] }, // Match any keyword starting with the given title
+      }
+    ]
+  };
+
+  return this.courseModel.find(searchCriteria).exec();
+}
 
   async searchCourses(course: { title?: string; category?: string; level?: DifficultyLevel; keywords?: string[]; }): Promise<Course[]> {
     const searchCriteria: any = {};
