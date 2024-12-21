@@ -19,26 +19,44 @@ export class CoursesService {
   ) {}
 
   // POST Methods
-  async createCourse(createCourseDto: CreateCourseDto): Promise<Course> {
-    const userId = createCourseDto.userId;
-    const user = await this.userModel.findById(userId).exec();
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} does not exist.`);
+  async createCourse(userId: string, createCourseDto: CreateCourseDto) {
+    if (!userId) {
+      throw new Error('Instructor ID is required but missing.');
     }
-    if (user.role !== 'instructor') {
-      throw new BadRequestException('Only instructors can create courses.');
+  
+    const { title, description, category, level } = createCourseDto;
+  
+    // Check for duplicate courses
+    const existingCourse = await this.courseModel.findOne({ title: title.toLowerCase().trim(), userId });
+    if (existingCourse) {
+      throw new ConflictException(`Course with title "${title}" already exists for this instructor.`);
     }
-
+    // Create a new course
     const newCourse = new this.courseModel({
-      ...createCourseDto,
-      versionNumber: 1,
+      title: title.toLowerCase().trim(),
+      description,
+      category,
+      level,
+      userId, // Ensure this is passed correctly
       students: [],
+      versionNumber: 1,
       versions: [],
     });
-
-    const savedCourse = await newCourse.save();
-    return savedCourse;
+    await newCourse.save();
+    // Add the new course to the instructor's createdCourses array
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $push: { createdCourses: newCourse._id } }
+    );
+  
+    return {
+      message: `Course "${title}" successfully created.`,
+      course: {
+        id: newCourse._id,
+        title: newCourse.title,
+        userId: newCourse.userId,
+      },
+    };
   }
 
   async enrollStudent(courseId: string, studentId: string, instructorId: string): Promise<Course> {

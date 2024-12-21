@@ -27,13 +27,13 @@ export class Course {
   @Prop({ required: true, enum: DifficultyLevel })
   level: DifficultyLevel;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   created_by: string;
 
   @Prop({ type: [Object], default: [] })
   versions: any[];
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   versionNumber: number;
 
   @Prop({ ref: 'User', required:true})
