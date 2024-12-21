@@ -12,6 +12,9 @@ export enum DifficultyLevel {
 @Schema({ timestamps: true })
 export class Course {
 
+
+  _id: mongoose.Schema.Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 
@@ -33,12 +36,17 @@ export class Course {
   @Prop({ required: true })
   versionNumber: number;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  instructorId: mongoose.Schema.Types.ObjectId;
+  @Prop({ ref: 'User', required:true})
+  userId:  mongoose.Schema.Types.ObjectId;
   
-
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] })
-  students: mongoose.Schema.Types.ObjectId[];
+  students: mongoose.Types.ObjectId[];
+
+  @Prop({ default: true })
+  isAvailable: boolean;
   
+  @Prop({default:true})
+  keywords: string[]
+    instructorId: any;
 }
 export const CourseSchema = SchemaFactory.createForClass(Course);
