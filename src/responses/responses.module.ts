@@ -8,6 +8,7 @@ import { QuestionBank, QuestionBankSchema } from '../Schemas/questionBank.schema
 import { User, UserSchema } from '../Schemas/users.schema';
 import { QuizzesService } from 'src/quizzes/quizzes.service';
 import { ModuleSchema } from 'src/Schemas/modules.schema';
+import { ResponseGateway } from './responses.gateway';
 
 // Define QuizzesService here if it's tightly coupled
 
@@ -19,9 +20,10 @@ import { ModuleSchema } from 'src/Schemas/modules.schema';
       { name: QuestionBank.name, schema: QuestionBankSchema },
       { name: User.name, schema: UserSchema },
       { name: 'Module', schema: ModuleSchema },
+      
     ]),
   ],
   controllers: [ResponsesController],
-  providers: [ResponsesService, QuizzesService], // Add QuizzesService here
+  providers: [ResponsesService, QuizzesService, ResponseGateway], // Add QuizzesService here
 })
 export class ResponsesModule {}

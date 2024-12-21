@@ -13,12 +13,13 @@ import { DiscussionsModule } from './discussions/discussions.module';
 import { CourseAnnouncementsModule } from './course-announcements/course-announcements.module';
 import { PlatformAnnouncementsModule } from './platform-announcements/platform-announcements.module';
 import { AuthModule } from './auth/auth.module';
-import { ScheduleModule } from '@nestjs/schedule';
 import { BackupService } from './backup/backup.service';
 import { ChatModule } from './chat/chat.module';
 import { QuestionBankModule } from './questionBank/questionBank.module';
 
+
 const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
+
 
 
 
