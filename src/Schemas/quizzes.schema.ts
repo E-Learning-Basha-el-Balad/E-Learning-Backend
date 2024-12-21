@@ -8,9 +8,15 @@ export class Quiz {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Module',unique: true, required: true })
   module_id: string;
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }], required: true })
-  questions: mongoose.Types.ObjectId[] | QuestionBank[];
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }], required: true })
+    questionsA: mongoose.Types.ObjectId[] | QuestionBank[];
   
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }], required: true })
+    questionsB: mongoose.Types.ObjectId[] | QuestionBank[];
+
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'QuestionBank' }], required: true })
+    questionsC: mongoose.Types.ObjectId[] | QuestionBank[];
+
   @Prop({ required: true, default: Date.now })
   created_at: Date;
 

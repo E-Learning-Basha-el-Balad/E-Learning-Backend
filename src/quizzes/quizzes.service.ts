@@ -20,78 +20,71 @@ export class QuizzesService {
     console.log('QuizModel:', this.quizModel); }
 
   // Create a new quiz
-async create(QuizData: createQuizzesDTo): Promise<Quiz> {
-  const { module_id, typeOfQuestions, questions, numOfQuestions } = QuizData;
+  async create(QuizData: createQuizzesDTo): Promise<Quiz> {
+    const { module_id, typeOfQuestions, numOfQuestions } = QuizData;
 
-  // Ensure that the provided module_id exists in the Module collection
-  const module = await this.moduleModel.findById(module_id);
-  if (!module) {
-    throw new NotFoundException(`Module with ID ${module_id} not found`);
-  }
+    // Ensure that the provided module_id exists
+    const module = await this.moduleModel.findById(module_id);
+    if (!module) {
+      throw new NotFoundException(`Module with ID ${module_id} not found`);
+    }
 
-  const existingQuiz = await this.quizModel.findOne({ module_id });
-  if (existingQuiz) {
-    throw new BadRequestException(
-      `A quiz already exists for the module "${module.title}". Only one quiz is allowed per module.`
-    );
-  }
+    const existingQuiz = await this.quizModel.findOne({ module_id });
+    if (existingQuiz) {
+      throw new BadRequestException(
+        `A quiz already exists for the module "${module.title}". Only one quiz is allowed per module.`
+      );
+    }
 
-  // Fetch random questions if `questions` is not explicitly provided
-  let selectedQuestions = [];
-  if (!questions || questions.length === 0) {
-    selectedQuestions = await this.getRandomQuestions(
+    // Fetch random questions for each difficulty level, ensuring each array contains exactly `numOfQuestions`
+    const questionsA = await this.getRandomQuestions(module_id, typeOfQuestions, numOfQuestions, 'A');
+    const questionsB = await this.getRandomQuestions(module_id, typeOfQuestions, numOfQuestions, 'B');
+    const questionsC = await this.getRandomQuestions(module_id, typeOfQuestions, numOfQuestions, 'C');
+
+    // Create the quiz document
+    const newQuiz = new this.quizModel({
       module_id,
+      questionsA,
+      questionsB,
+      questionsC,
+      numOfQuestions,
       typeOfQuestions,
-      numOfQuestions
-    ); // Store question IDs
-  } 
-  //else {
-  //   // Validate the provided question IDs
-  //   const questionDocs = await this.questionBankModel.find({ _id: { $in: questions } });
-  //   if (questionDocs.length !== questions.length) {
-  //     throw new BadRequestException('One or more questions are invalid');
-  //   }
-  //   selectedQuestions = questionDocs.map((q) => q._id); // Store question IDs
-  // }
+      created_at: new Date(),
+    });
 
-  // Create the quiz document
-  const newQuiz = new this.quizModel({
-    module_id,
-    questions: selectedQuestions,
-    numOfQuestions, // Include numOfQuestions
-    typeOfQuestions, // Include typeOfQuestions
-    created_at: new Date(),
-  });
-
-  // Save the quiz to the database
-  return await newQuiz.save();
-}
-
-
-// Helper method to fetch random questions
-private async getRandomQuestions(
-  module_id: string,
-  typeOfQuestions: string[],
-  numOfQuestions: number
-): Promise<mongoose.Types.ObjectId[]> {
-  const matchCriteria: any = { module_id: new mongoose.Types.ObjectId(module_id) };
-  if (typeOfQuestions?.length > 0) {
-    matchCriteria.type = { $in: typeOfQuestions };
+    // Save the quiz
+    return await newQuiz.save();
   }
 
-  const questionDocs = await this.questionBankModel.aggregate([
-    { $match: matchCriteria },
-    { $sample: { size: numOfQuestions } },
-  ]);
+  // Helper method to fetch random questions by difficulty
+  private async getRandomQuestions(
+    module_id: string,
+    typeOfQuestions: string[],
+    numOfQuestions: number,
+    difficulty: string
+  ): Promise<mongoose.Types.ObjectId[]> {
+    const matchCriteria: any = {
+      module_id: new mongoose.Types.ObjectId(module_id),
+      difficulty,
+    };
+    if (typeOfQuestions?.length > 0) {
+      matchCriteria.type = { $in: typeOfQuestions };
+    }
 
-  if (questionDocs.length < numOfQuestions) {
-    throw new BadRequestException(
-      `Not enough questions available in the question bank for the specified criteria (${questionDocs.length || 0} found, ${numOfQuestions} needed).`
-    );
+    const questionDocs = await this.questionBankModel.aggregate([
+      { $match: matchCriteria },
+      { $sample: { size: numOfQuestions } },
+    ]);
+
+    if (questionDocs.length < numOfQuestions) {
+      throw new BadRequestException(
+        `Not enough questions available for difficulty "${difficulty}" (${questionDocs.length} found, ${numOfQuestions} needed).`
+      );
+    }
+
+    return questionDocs.map((q) => q._id);
   }
-
-  return questionDocs.map((q) => q._id);
-}
+  
 
   
   // private async validateQuestionIds(
@@ -120,43 +113,44 @@ private async getRandomQuestions(
   
 
   async findByUserId(user_id: ObjectId, quiz_id: string): Promise<QuestionBank[]> {
-    // Fetch the user document
+    // Fetch the user
     const user = await this.userModel.findById(user_id);
     if (!user) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
-  
-    // Fetch the quiz and populate the `questions` field
+
+    // Fetch the quiz and populate the question fields
     const quiz = await this.quizModel
       .findById(quiz_id)
-      .populate<{ questions: QuestionBank[] }>('questions'); // Add type for populated field
+      .populate<{ questionsA: QuestionBank[]; questionsB: QuestionBank[]; questionsC: QuestionBank[] }>([
+        { path: 'questionsA' },
+        { path: 'questionsB' },
+        { path: 'questionsC' },
+      ]);
+
     if (!quiz) {
       throw new NotFoundException(`Quiz with ID ${quiz_id} not found`);
     }
-  
-    // Determine difficulty based on the user's GPA
-    let difficulty: string;
+
+    // Determine the appropriate question set based on user GPA
+    let selectedQuestions: QuestionBank[];
     if (user.gpa >= 3.0) {
-      difficulty = 'A'; // Hard questions for high GPA
+      selectedQuestions = quiz.questionsA;
     } else if (user.gpa >= 2.0) {
-      difficulty = 'B'; // Moderate questions for medium GPA
+      selectedQuestions = quiz.questionsB;
     } else {
-      difficulty = 'C'; // Easy questions for low GPA
+      selectedQuestions = quiz.questionsC;
     }
-  
-    // Filter questions in the quiz by difficulty
-    const filteredQuestions = quiz.questions.filter(
-      (q) => q.difficulty === difficulty
-    );
-  
-    if (filteredQuestions.length === 0) {
-      throw new NotFoundException(
-        `No questions found for difficulty ${difficulty} in quiz ID ${quiz_id}`
+
+    if (selectedQuestions.length !== quiz.numOfQuestions) {
+      throw new BadRequestException(
+        `The selected questions do not match the required count of ${quiz.numOfQuestions}.`
       );
     }
-  
-    return filteredQuestions;
+
+    return selectedQuestions;
   }
+  
   
   
   
@@ -169,49 +163,54 @@ private async getRandomQuestions(
 }
 
   // Update a quiz by ID
-  async update(quizId: string, updateQuizData: Partial<createQuizzesDTo>): Promise<Quiz> {
-    const { module_id, typeOfQuestions, questions, numOfQuestions } = updateQuizData;
-  
-    // Find the quiz by ID to ensure it exists
+  async update(quizId: string, updateQuizData: updateQuizzesDTo): Promise<Quiz> {
+    const { module_id, typeOfQuestions, numOfQuestions } = updateQuizData;
+
+    // Find the quiz by ID
     const existingQuiz = await this.quizModel.findById(quizId);
     if (!existingQuiz) {
       throw new NotFoundException(`Quiz with ID ${quizId} not found`);
-  }
+    }
 
-  // Fetch the current module details to get the title
-    
-    
+    // Prevent module change
+    if (module_id && module_id !== existingQuiz.module_id.toString()) {
+      throw new BadRequestException(
+        `The module for this quiz cannot be changed. Delete the quiz and create a new one for a different module.`
+      );
+    }
 
-  // Prevent the module from being changed
-  const currentModule = await this.moduleModel.findById(existingQuiz.module_id);
-  if (module_id && module_id !== existingQuiz.module_id.toString()) {
-    throw new BadRequestException(
-      `The module for this quiz cannot be changed. Current module: "${currentModule.title}".\nIf you want to Change the module you have to delete the quiz and create another one.`
-    );
-  }
-    
-    // Fetch random questions if `questions` is not explicitly provided
-    if (!questions || questions.length === 0) {
-      if (module_id || typeOfQuestions || numOfQuestions) {
-        // Update questions based on new criteria
-        const selectedQuestions = await this.getRandomQuestions(
-          module_id || existingQuiz.module_id.toString(),
-          typeOfQuestions || existingQuiz.typeOfQuestions || [],
-          numOfQuestions || existingQuiz.numOfQuestions || 0
-        );
-        existingQuiz.questions = selectedQuestions;
-      }
-    } 
-  
+    // Update questions for each difficulty if criteria are provided
+    if (typeOfQuestions || numOfQuestions) {
+      existingQuiz.questionsA = await this.getRandomQuestions(
+        module_id || existingQuiz.module_id.toString(),
+        typeOfQuestions || existingQuiz.typeOfQuestions,
+        numOfQuestions || existingQuiz.numOfQuestions,
+        'A'
+      );
+
+      existingQuiz.questionsB = await this.getRandomQuestions(
+        module_id || existingQuiz.module_id.toString(),
+        typeOfQuestions || existingQuiz.typeOfQuestions,
+        numOfQuestions || existingQuiz.numOfQuestions,
+        'B'
+      );
+
+      existingQuiz.questionsC = await this.getRandomQuestions(
+        module_id || existingQuiz.module_id.toString(),
+        typeOfQuestions || existingQuiz.typeOfQuestions,
+        numOfQuestions || existingQuiz.numOfQuestions,
+        'C'
+      );
+    }
+
     // Update other fields
     if (typeOfQuestions) existingQuiz.typeOfQuestions = typeOfQuestions;
     if (numOfQuestions) existingQuiz.numOfQuestions = numOfQuestions;
-  
-    // Update the quiz in the database
+
+    // Save the updated quiz
     await existingQuiz.save();
     return existingQuiz;
   }
-  
 
   // Delete a quiz by ID
   async delete(id: string): Promise<Quiz> {

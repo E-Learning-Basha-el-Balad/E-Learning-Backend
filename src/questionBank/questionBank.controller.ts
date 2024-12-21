@@ -1,16 +1,20 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { QuestionBankService } from './questionBank.service';
 import { QuestionBank } from '../Schemas/QuestionBank.schema';
 import { createQuestionsDTo } from './questionDto/createQuestionDto.dto';
 import { updateQuestionsDTo } from './questionDto/updateQuestionDto.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('question-bank')
 export class QuestionBankController {
   constructor(private readonly questionBankService: QuestionBankService) {}
 
   // Create a new question
+  
   @Post()
-  async createQuestion(@Body() questionData: createQuestionsDTo): Promise<QuestionBank> {
+  async createQuestion(@Body() questionData: createQuestionsDTo, @Req() req:any ): Promise<QuestionBank> {
+
+    
     return await this.questionBankService.createQuestion(questionData);
   }
 
