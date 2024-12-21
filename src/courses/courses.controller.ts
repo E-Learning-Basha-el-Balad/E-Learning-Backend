@@ -32,6 +32,11 @@ export class CoursesController {
     const { courseId} = enrollDto;
     return await this.coursesService.enrollInCourse(courseId,req.user.sub);
   }
+  @UseGuards(AuthGuard)
+  @Get('searchByTitle')
+  async searchCoursesByTitle(@Query('title') title: string): Promise<Course[]> {
+    return this.coursesService.searchCoursesByTitle(title);
+  }
 
   @Get('Allcourses')
   async getAllCourses(): Promise<Course[]> {
