@@ -69,12 +69,18 @@ export class CoursesService {
       _id: courseId,
       students: { $in: [studentId] }
     });
+
+    const user = await this.userModel.findOne({_id:studentId})
   
     if (isEnrolled) {
       // If the student is already enrolled, throw a ConflictException
       throw new ConflictException(`Student with ID "${studentId}" is already enrolled in this course`);
-    } else {
-      // Otherwise, push the student ID into the students array in the course document
+    } else if(user.role == 'admin' || user.role=='instructor') {
+    
+      throw new ForbiddenException(`${user.role} cant enroll in courses`);
+
+    }
+    else{
       await this.courseModel.updateOne(
         { _id: courseId },
         { $push: { students: studentId } }
@@ -87,12 +93,14 @@ export class CoursesService {
       
       // Log the successful enrollment
       this.logger.log(`Student with ID "${studentId}" successfully enrolled in course ${courseId}`);
+      return {
+        message: `Student with ID "${studentId}" successfully enrolled in course ${courseId}` // HTTP status code for Created
+    }
     }
   
     // Return a success message in JSON format after enrollment
-    return {
-      message: `Student with ID "${studentId}" successfully enrolled in course ${courseId}` // HTTP status code for Created
-    };
+    
+ 
   }
 
   // GET Methods
