@@ -4,10 +4,7 @@ import mongoose from 'mongoose';
 
 export class CreateCourseDto {
 
-  @IsNotEmpty()
-  @IsString()
-  userId: mongoose.Types.ObjectId;
-    
+
   @IsNotEmpty()
   @IsString()
   title: string;
@@ -24,16 +21,6 @@ export class CreateCourseDto {
   @IsEnum(DifficultyLevel)
   level: DifficultyLevel;
 
-  @IsNotEmpty()
-  @IsString()
-  created_by: string;
 
-  @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  students: string[];
 
-  @IsNotEmpty()
-  @IsDateString()
-  created_at: string;
 }

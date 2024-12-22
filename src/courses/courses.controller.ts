@@ -7,6 +7,7 @@ import { Course, DifficultyLevel } from '../Schemas/courses.schema';
 import { User } from '../Schemas/users.schema';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AuthGuard } from '../auth/auth.guard'
+import mongoose from 'mongoose';
 
 @Controller('courses')
 export class CoursesController {
@@ -22,10 +23,12 @@ export class CoursesController {
   }
 
   @Post('create')
-  async createCourse(@Body() createCourseDto: CreateCourseDto): Promise<any> {
-    return this.coursesService.createCourse(createCourseDto);
+  @UseGuards(AuthGuard) // Protect the route with AuthGuard
+  async createCourse(@Req() req: any, @Body() createCourseDto: CreateCourseDto) {
+      const instructorId = req.user.sub; // Extract `sub` from JWT payload
+      return await this.coursesService.createCourse(instructorId, createCourseDto);
   }
-
+  
   @UseGuards(AuthGuard)
   @Post('enroll')
   async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
