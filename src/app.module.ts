@@ -18,7 +18,7 @@ import { ChatModule } from './chat/chat.module';
 import { QuestionBankModule } from './questionBank/questionBank.module';
 
 
-const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
+const uri:string="mongodb://127.0.0.1:27017/Swdb"
 
 
 

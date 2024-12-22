@@ -8,7 +8,15 @@ export class createQuizzesDTo {
 
     @IsArray()
     @IsNotEmpty({ each: true })
-    questions: QuestionBank[];
+    questionsA: QuestionBank[];
+
+    @IsArray()
+    @IsNotEmpty({ each: true })
+    questionsB: QuestionBank[];
+
+    @IsArray()
+    @IsNotEmpty({ each: true })
+    questionsC: QuestionBank[];
 
     @IsNumber()
     numOfQuestions: number;

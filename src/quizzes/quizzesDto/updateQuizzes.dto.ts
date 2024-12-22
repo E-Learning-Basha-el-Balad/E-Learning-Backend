@@ -2,13 +2,17 @@ import { IsString, IsArray, IsNumber, IsNotEmpty } from 'class-validator';
 import { QuestionBank } from 'src/Schemas/questionBank.schema';
 
 export class updateQuizzesDTo {
-    @IsString()
-    @IsNotEmpty()
+    
     module_id: string;
 
-    @IsArray()
-    @IsNotEmpty({ each: true })
-    questions: QuestionBank[];
+   
+    questionsA: QuestionBank[];
+
+    
+    questionsB: QuestionBank[];
+
+    
+    questionsC: QuestionBank[];
 
     @IsNumber()
     numOfQuestions: number;
