@@ -90,4 +90,11 @@ export class CoursesController {
   ): Promise<Course> {
     return this.coursesService.deleteCourse(courseId, instructorId);
   }
+
+  //ADDED THIS TO GET ALL COURSES MADE BY AN INSTRUCTOR
+  @Get('taught/by/:instructorId')
+  async getInstructorCourses(@Param('instructorId') instructorId: string): Promise<Course[]> {
+    return this.coursesService.getInstructorCourses(instructorId);
+  }
+
 }

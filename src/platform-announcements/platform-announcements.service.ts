@@ -25,7 +25,7 @@ export class PlatformAnnouncementsService {
 
         // If no announcements are found return a message saying so
         if (announcements.length === 0) 
-            return { message: 'No announcements found for this course', data: [] };
+            return { message: 'No announcements found', data: [] };
 
         // Return the announcements
         return { message: 'Announcements found', data: announcements };

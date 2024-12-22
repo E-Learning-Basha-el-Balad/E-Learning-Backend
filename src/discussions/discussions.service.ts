@@ -27,32 +27,23 @@ export class DiscussionsService {
 
     // Create a new post
     async createPost(createPostDto: CreatePostDto): Promise<PostDocument> {
-
-        //Validating the course and the author by checking if they are present in the database
-        const course = await this.courseModel.findById(createPostDto.course);
-        const author = await this.userModel.findById(createPostDto.author);
-
-        if (!course) {throw new Error('Course not found');}
-        if (!author) {throw new Error('Author not found');}
-        
-        //Creating the post
         const createdPost = new this.postModel(createPostDto);
-        return createdPost.save();
-        
+        await createdPost.save();
+        return createdPost.populate('author', '_id name role');
+        console.log(createdPost.author._id)
+
     }
 
     // Get all posts for a specific course
     async getPostsByCourse(courseId: string): Promise<{ message: string, data: PostDocument[] }> {
+        const posts = await this.postModel.find({ course: courseId })
+        .sort({ createdAt: -1 })
+        .populate('author', '_id name role') // Populate the author field with id, name, and role
+        .exec();
 
-        // Find all posts for the course and sort them by creation date
-        const posts = await this.postModel.find({ course: courseId }).sort({ createdAt:-1 }).exec();
-
-        // If no posts are found return a message saying so
         if (posts.length === 0) 
             return { message: 'No posts found for this course', data: [] };
 
-        
-        // Return the posts
         return { message: 'Posts found', data: posts };
     }
 
@@ -64,38 +55,34 @@ export class DiscussionsService {
 
     // Admin
     async deletePostAdmin(postId: string): Promise<PostDocument> {
+        await this.commentModel.deleteMany({ post: postId }).exec(); // Delete related comments
         return this.postModel.findByIdAndDelete(postId);
-
-        // Guard should handle if it is unauthorized (MAMDO)
-
     }
 
     // Instructor
     async deletePostInstructor(postId: string, instructorId: string): Promise<PostDocument> {
-
-        const post = await this.postModel.findById(postId);
+        const post = await this.postModel.findById(postId).populate('course').exec();
 
         // Checks if the ID entered is the ID of the course instructor
-        if (post.course.instructorId.toString() == instructorId) {
+        if (post.course.userId.toString() == instructorId) {
+            await this.commentModel.deleteMany({ post: postId }).exec(); // Delete related comments
             return this.postModel.findByIdAndDelete(postId);
         }
-
-        // Guard should handle if it is unauthorized (MAMDO)
+        throw new Error('Unauthorized: Instructors can only delete posts within their own course'); 
     }
 
     // Student
     async deletePostStudent(postId: string, studentId: string): Promise<PostDocument> {
-
         const post = await this.postModel.findById(postId);
 
         // Checks if the ID entered is the ID of the student who created the post
-        if (post.author.toString() == studentId) {
+        if (post.author._id.toString() == studentId) {
+
+            await this.commentModel.deleteMany({ post: postId }).exec(); 
             return this.postModel.findByIdAndDelete(postId);
+
         }
-
-        // Guard should handle if it is unauthorized (MAMDO)
-
-
+        throw new Error('Unauthorized: Students can only delete their own posts'); 
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -105,36 +92,26 @@ export class DiscussionsService {
 
     // Create a new comment
     async createComment(createCommentDto: CreateCommentDto): Promise<CommentDocument> {
-
-        //Validating the post and the author by checking if they are present in the database
-        const post = await this.postModel.findById(createCommentDto.post);
-        const author = await this.userModel.findById(createCommentDto.author);
-
-        if (!post) {throw new Error('Post not found');}
-        if (!author) {throw new Error('Author not found');}
-        
-        //Creating the comment
         const createdComment = new this.commentModel(createCommentDto);
-        return createdComment.save();
-
+        await createdComment.save();
+        return createdComment.populate('author', '_id name role'); // Populate the author field with id, name, and role
     }
 
     // Get all comments for a specific post
     async getCommentsByPost(postId: string): Promise<{ message: string, data: CommentDocument[] }> {
-            
-        // Find all comments for the post and sort them by creation date
-        const comments = await this.commentModel.find({ post: postId }).sort({ createdAt:-1 }).exec();
-    
-        // If no comments are found return a message saying so
+        
+        const comments = await this.commentModel.find({ post: postId })
+        .sort({ createdAt: -1 })
+        .populate('author', '_id name role') // Populate the author field with id, name, and role
+        .exec();
+
+
         if (comments.length === 0) 
             return { message: 'No comments found for this post', data: [] };
-        
-            
-        // Return the comments
-        return { message: 'Comments found', data: comments };
 
+        return { message: 'Comments found', data: comments };
     }
-    
+
     // DELETE COMMENT ( 3 IMPLEMENTATIONS FOR THE 3 DIFFERENT ROLES)
     // (MAMDO) SHOULD USE GUARDS TO CHECK IF THE USER IS AUTHORIZED TO USE THE CORRECT DELETE METHOD
     ////////////////////////////////////////////////////////////////////////////////////
@@ -147,22 +124,22 @@ export class DiscussionsService {
     // Instructor
     async deleteCommentInstructor(commentId: string, instructorId: string): Promise<CommentDocument> {
         const comment = await this.commentModel.findById(commentId);
-        const post = await this.postModel.findById(comment.post);
-
+        const post = await this.postModel.findById(comment.post).populate('course').exec();
+         
         if (post.course.userId.toString() === instructorId) {
             return this.commentModel.findByIdAndDelete(commentId);
         }
-        throw new Error('Unauthorized');
+        throw new Error('Unauthorized: Instructors can only delete comments within their own course');
     }
 
     // Student
     async deleteCommentStudent(commentId: string, studentId: string): Promise<CommentDocument> {
         const comment = await this.commentModel.findById(commentId);
 
-        if (comment.author.toString() === studentId) {
+        if (comment.author._id.toString() === studentId) {
             return this.commentModel.findByIdAndDelete(commentId);
         }
-        throw new Error('Unauthorized');
+        throw new Error('Unauthorized: Students can only delete their own comments');
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
