@@ -55,6 +55,16 @@ export class ProgressController {
         return averageScores;
     }
 
+    @Get('/averageScore')
+    @Roles(Role.Student)
+    async getAverageScoreByCourse(@Query('courseId') courseId: string, @Req() req: any) {
+        const averageScore = await this.progressService.getAverageScoreByCourse(req.user.sub, courseId);
+        if(averageScore === null) {
+            throw new HttpException('No average score found for this course', HttpStatus.NOT_FOUND);
+        }
+        return averageScore;
+    }
+
     //get the number of quizzes that are left for the student to solve by course
     @Get('/engagement')
     @Roles(Role.Student)
@@ -78,6 +88,8 @@ export class ProgressController {
         return await this.progressService.rateModule(req.user.sub, moduleId, rating);
     }
 
+    //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
+
     @Get('/course-rating')
     @Roles(Role.Student)
     async getCourseRatings(@Query('courseId') courseId: string) {
@@ -87,8 +99,6 @@ export class ProgressController {
         }
         return response;
     }
-
-    //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     @Get('averageScore/instructor')
     @Roles(Role.Instructor)

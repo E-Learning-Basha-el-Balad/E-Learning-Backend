@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, ObjectId } from 'mongoose';
 import { Response, ResponseDocument } from '../Schemas/responses.schema';
@@ -8,6 +8,10 @@ import { User, UserDocument } from '../Schemas/users.schema';
 import { createResponseDto } from './responsesDto/createResponse.dto';
 import { updateResponseDto } from './responsesDto/updateResponse.dto';
 import { QuizzesService } from 'src/quizzes/quizzes.service';
+import { ProgressService } from 'src/progress/progress.service';
+import { Module } from 'src/Schemas/modules.schema';
+import { Course } from 'src/Schemas/courses.schema'
+import { CreateProgressDto } from 'src/progress/dto/CreateProgress.dto';
 @Injectable()
 export class ResponsesService {
   constructor(
@@ -15,6 +19,9 @@ export class ResponsesService {
     @InjectModel(Quiz.name) private quizModel: Model<Quiz>,
     @InjectModel(QuestionBank.name) private questionBankModel: Model<QuestionBank>,
     @InjectModel(User.name) private userModel: Model<User>, // Add this
+    @InjectModel('Module') private moduleModel: Model<Module>,
+    @InjectModel('Course') private courseModel: Model<Course>,
+    private progressService: ProgressService,
     private readonly quizzesService: QuizzesService,
   ) {}
 
@@ -81,6 +88,45 @@ export class ResponsesService {
       submitted_at: new Date(),
       message,
     });
+
+    const quiz = await this.quizModel.findById(quiz_id).exec();
+    const module = await this.moduleModel.find({ _id: quiz.module_id }).exec();
+    const moduleJSON = JSON.parse(JSON.stringify(module));
+    const courseId = moduleJSON.course_id;
+
+    const modules = await this.moduleModel.find({ course_id: courseId }).exec();
+    const modulesJSON = JSON.parse(JSON.stringify(modules));
+    let totalQuizzes = 0;
+
+    // Calculate total quizzes
+    for (const module of modules) {
+      const quizzesCount = await this.quizModel.countDocuments({ module_id: module._id }).exec();
+      totalQuizzes += quizzesCount;
+    }
+
+    let responsesJSON = [];
+
+    for (const module of modules) {
+      const quizzes = await this.quizModel.find({ module_id: module._id }).exec();
+      const quizzesJSON = JSON.parse(JSON.stringify(quizzes));
+      const quizIds = quizzesJSON.map(quiz => quiz._id);
+
+      const responses = await this.responseModel.find({ quiz_id: { $in: quizIds } }).exec();
+      responsesJSON = JSON.parse(JSON.stringify(responses));
+    }
+
+    const uniqueResponses = Array.from(new Map(responsesJSON.map(response => [response.quiz_id, response])).values());
+    const completionPercentage = uniqueResponses.length/totalQuizzes;
+
+    const progress: CreateProgressDto = {
+      user_id: user_id.toString(),
+      course_id: courseId,
+      completion_percentage: completionPercentage * 100,
+      last_accessed: new Date(),
+      };
+      
+      await this.progressService.createProgress(progress);
+
   
     return await newResponse.save();
   }

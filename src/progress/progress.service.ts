@@ -24,11 +24,19 @@ export class ProgressService {
     /////////////////////////////////////  STUDENT APIS //////////////////////////////////////
 
     async createProgress(createProgressDto: CreateProgressDto): Promise<Progress> {
-        const newProgress = new this.progressModel(createProgressDto);
-        return await newProgress.save();
+        const studentId = createProgressDto.user_id;
+        const courseId = createProgressDto.course_id;
+
+        const updatedProgress = await this.progressModel.findOneAndUpdate(
+        { studentId, courseId },
+        { $set: createProgressDto }, 
+        { new: true, upsert: true }
+    );
+
+    return updatedProgress;
     }
 
-    async getAvgCompletionPercentage(userId: string): Promise<number> {
+    async getAvgCompletionPercentage(userId: string): Promise<any> {
         const progress = await this.progressModel.find({user_id: userId}).exec();
         console.log(progress)
         if(!progress || progress.length === 0) {
@@ -38,7 +46,7 @@ export class ProgressService {
         const total = percentages.reduce((acc, curr) => acc + curr,0);
         const average = total / percentages.length;
 
-        return average;
+        return {average: average};
     }
 
     async getCompletionPercentageByCourse(studentId: string, courseId: string): Promise<number[]> {
@@ -100,6 +108,45 @@ export class ProgressService {
         response.student = { id: studentId, gpa: gpa};
     
         return response;
+    }
+
+    async getAverageScoreByCourse(studentId: string, courseId: string): Promise<any> {
+        const responses = await this.responsesModel.find({ user_id: studentId }).exec();
+        const responsesJSON = JSON.parse(JSON.stringify(responses));
+        if(responsesJSON.length === 0){
+            throw new NotFoundException("This student doesn't have any responses saved (FK problem)")
+        }
+        
+        const quizIds = responsesJSON.map(response => response.quiz_id);
+        const quizzes = await this.quizModel.find({ _id: { $in: quizIds } }).exec();
+        const quizzesJSON = JSON.parse(JSON.stringify(quizzes));
+        if(quizzesJSON.length === 0){
+            throw new NotFoundException("This quiz id cannot be found in the Quizzes collection (FK problem)")
+        }
+
+        const moduleIds = quizzesJSON.map(quiz => quiz.module_id);
+        const modules = await this.moduleModel.find({ _id: {$in: moduleIds} }).exec();
+        const modulesJSON = JSON.parse(JSON.stringify(modules))
+        if(modulesJSON.length === 0){
+            throw new NotFoundException("This module id cannot be found in the module collection (FK problem)")
+        }
+
+        const courseIds = modulesJSON.map(module => module.course_id);
+        const course = await this.courseModel.find({ _id: { $in: courseIds } }).exec();
+        if(course.length === 0){
+            throw new NotFoundException("This course id cannot be found in the course collection (FK problem)")
+        }
+        const courseJSON = JSON.parse(JSON.stringify(course));
+
+        const courseModules = modulesJSON.filter(module => module.course_id == courseJSON._id);
+        const moduleIds2 = courseModules.map(module => module._id);
+        const courseQuizzes = quizzesJSON.filter(quiz => moduleIds.includes(quiz.module_id));
+        const quizIds2 = courseQuizzes.map(quiz => quiz._id);
+        const courseResponses = responsesJSON.filter(response => quizIds.includes(response.quiz_id));
+        const scores = courseResponses.map(response => response.score);
+        const totalScore = scores.reduce((acc, curr) => acc + curr, 0);
+        const averageScore = totalScore / scores.length;
+
     }
 
     async getEngagementTrend(studentId: string, courseId: string): Promise<any> {
