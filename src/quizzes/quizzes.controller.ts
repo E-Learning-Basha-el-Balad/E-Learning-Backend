@@ -31,6 +31,12 @@ export class QuizzesController {
    return await this.quizzesService.findByUserId(user_id, quiz_id);
  }
 
+ @Get('m/module/:module_id')
+async getQuizByModuleId(@Param('module_id') module_id: string): Promise<Quiz> {
+  return await this.quizzesService.findByModuleId(module_id);
+}
+
+
 
 // Get a quiz by quiz ID
 @Get(':quiz_id')  // Prefix with 'quiz'

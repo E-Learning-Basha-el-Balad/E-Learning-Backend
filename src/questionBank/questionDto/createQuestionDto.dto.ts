@@ -9,7 +9,7 @@ export class createQuestionsDTo {
     @IsNotEmpty()
     type: string;
 
-    
+   
     options: string[];
 
     @IsString()

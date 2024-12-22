@@ -212,6 +212,28 @@ export class QuizzesService {
     return existingQuiz;
   }
 
+
+  async findByModuleId(module_id: string): Promise<Quiz> {
+    // Ensure that the provided module_id is valid
+    if (!mongoose.Types.ObjectId.isValid(module_id)) {
+      throw new BadRequestException(`Invalid module ID: ${module_id}`);
+    }
+  
+    // Find the quiz associated with the given module_id
+    const quiz = await this.quizModel.findOne({ module_id }).populate([
+      { path: 'questionsA', model: 'QuestionBank' },
+      { path: 'questionsB', model: 'QuestionBank' },
+      { path: 'questionsC', model: 'QuestionBank' },
+    ]);
+  
+    if (!quiz) {
+      throw new NotFoundException(`No quiz found for module ID: ${module_id}`);
+    }
+  
+    return quiz;
+  }
+  
+
   // Delete a quiz by ID
   async delete(id: string): Promise<Quiz> {
     return await this.quizModel.findByIdAndDelete(id);  // Find and delete the student

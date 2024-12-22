@@ -17,7 +17,6 @@ export class updateQuizzesDTo {
     @IsNumber()
     numOfQuestions: number;
 
-    @IsArray()
-    @IsNotEmpty({ each: true })
+    
     typeOfQuestions: string[];
 }

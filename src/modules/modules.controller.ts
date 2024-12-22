@@ -103,4 +103,10 @@ export class ModulesController {
         return this.modulesService.getAllModules();
     }
 
+    // New endpoint to get module by ID without requiring courseId
+    @Get('/:moduleId')
+    async getModuleById(@Param('moduleId') moduleId: string): Promise<CourseModule> {
+        return this.modulesService.getModuleById(moduleId);
+    }
+
 }

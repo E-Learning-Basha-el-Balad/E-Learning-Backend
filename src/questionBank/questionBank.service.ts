@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { QuestionBank, QuestionBankDocument } from '../Schemas/QuestionBank.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Module } from 'src/Schemas/modules.schema';
 import { createQuestionsDTo } from './questionDto/createQuestionDto.dto';
 import { updateQuestionsDTo } from './questionDto/updateQuestionDto.dto';
@@ -70,6 +70,23 @@ export class QuestionBankService {
 
     return question;
   }
+
+  async findQuestionsByModuleId(module_id: string): Promise<QuestionBank[]> {
+    // Validate the provided module ID
+    if (!mongoose.Types.ObjectId.isValid(module_id)) {
+      throw new BadRequestException(`Invalid module ID: ${module_id}`);
+    }
+  
+    // Find all questions related to the module
+    const questions = await this.questionBankModel.find({ module_id });
+  
+    if (!questions || questions.length === 0) {
+      throw new NotFoundException(`No questions found for module ID: ${module_id}`);
+    }
+  
+    return questions;
+  }
+  
 
   async findAll(): Promise<QuestionBank[]> {
     let questions= await this.questionBankModel.find();  // Fetch all students from the database
