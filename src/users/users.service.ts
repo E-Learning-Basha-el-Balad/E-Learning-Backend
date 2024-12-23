@@ -37,8 +37,22 @@ export class UsersService {
 
 
   async getStudents(){
-    return await this.userModel.find({role:"student"})
+    return await this.userModel.aggregate([
+      {
+        $match: { role: 'student' } 
+      },
+      {
+        $lookup: {
+          from: 'courses', 
+          localField: 'enrolledCourses', 
+          foreignField: '_id', 
+          as: 'courses' 
+        }
+      }
+    ]);
+
   }
+  
 
   async getInstructors(){
 
@@ -48,10 +62,10 @@ export class UsersService {
       },
       {
         $lookup: {
-          from: 'courses', // the collection to join with
-          localField: '_id', // field in Users collection
-          foreignField: 'userId', // field in Courses collection
-          as: 'courses' // the name of the resulting array
+          from: 'courses', 
+          localField: '_id', 
+          foreignField: 'userId', 
+          as: 'courses' 
         }
       }
     ]);
