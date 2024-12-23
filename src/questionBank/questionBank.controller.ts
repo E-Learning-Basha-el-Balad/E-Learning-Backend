@@ -30,6 +30,12 @@ export class QuestionBankController {
     return await this.questionBankService.findAll();
   }
 
+  @Get('m/module/:module_id')
+async getQuestionsByModuleId(@Param('module_id') module_id: string): Promise<QuestionBank[]> {
+  return await this.questionBankService.findQuestionsByModuleId(module_id);
+}
+
+
   // Update a question by ID
   @Put(':id')
   async updateQuestion(

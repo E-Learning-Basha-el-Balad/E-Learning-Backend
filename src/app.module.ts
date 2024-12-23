@@ -21,8 +21,6 @@ import * as path from 'path';
 const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
 
 
-
-
 @Module({
   imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
   MongooseModule.forRoot(uri),

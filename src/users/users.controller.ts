@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { CreateUserDTO } from './CreateUser.dto';
 import { UsersService } from './users.service';
 import { Role, User } from '../Schemas/users.schema';
 import { Types } from 'mongoose';
@@ -15,6 +16,7 @@ export class UsersController {
     return this.usersService.getStudents();
   }
 
+
   @Get('instructors')
   async getInstructors() {
     return this.usersService.getInstructors();
@@ -30,3 +32,14 @@ export class UsersController {
     return this.usersService.updateUserName(objectId, newName);
   }
 }
+@Delete('deletemyself')
+@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+@Roles(Role.Student) // Allow Admin, Instructor, and Student roles
+async DeleteMyself(@Req() req: any): Promise<User> {
+  return await this.usersService.DeleteMyself(req.user.sub);
+}
+@Delete('deleteuser')
+@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+@Roles(Role.Admin)
+async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User> {
+  return await this.usersService.deleteUser(req.user.sub,userId);
