@@ -22,6 +22,16 @@ export class UsersService {
     
     return user
   }
+  async updateUserName(userId: Types.ObjectId, newName: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.name = newName;
+    return user.save();
+  }
   async getUserById(id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:id})
     
