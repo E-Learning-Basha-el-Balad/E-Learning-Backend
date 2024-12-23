@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, ObjectId } from 'mongoose';
 import { Response, ResponseDocument } from '../Schemas/responses.schema';
@@ -8,6 +8,9 @@ import { User, UserDocument } from '../Schemas/users.schema';
 import { createResponseDto } from './responsesDto/createResponse.dto';
 import { updateResponseDto } from './responsesDto/updateResponse.dto';
 import { QuizzesService } from 'src/quizzes/quizzes.service';
+import { ResponseGateway } from './responses.gateway';
+import { Socket } from 'socket.io';
+
 @Injectable()
 export class ResponsesService {
   constructor(
@@ -16,6 +19,7 @@ export class ResponsesService {
     @InjectModel(QuestionBank.name) private questionBankModel: Model<QuestionBank>,
     @InjectModel(User.name) private userModel: Model<User>, // Add this
     private readonly quizzesService: QuizzesService,
+    private readonly responseGateway: ResponseGateway,
   ) {}
 
   /**
@@ -23,7 +27,8 @@ export class ResponsesService {
    */
   async createResponse(responseData: createResponseDto): Promise<Response> {
     const { user_id, quiz_id, answers } = responseData;
-  
+    
+    const user = await this.userModel.findById(user_id);
     // Fetch the user and their corresponding quiz questions by difficulty
     const quizQuestions: QuestionBankDocument[] = (await this.quizzesService.findByUserId(user_id, quiz_id)) as QuestionBankDocument[];
   
@@ -53,6 +58,7 @@ export class ResponsesService {
         user_answer: answer.user_answer,
         correct_answer: question.correct_answer, // Store the correct answer
       });
+      this.responseGateway.sendGpaUpdate(user_id.toString(), user.gpa);
     }
   
     // Generate the message based on the user's performance
@@ -69,9 +75,10 @@ export class ResponsesService {
     const normalizedScore = score / totalQuestions;
   
     // Update the user's GPA
-    await this.updateUserGPA(user_id, normalizedScore);
+    await this.updateUserGPA(user_id.toString(), normalizedScore);
     
-    score= score*100/totalQuestions;
+    // Convert score to percentage
+    score = score * 100 / totalQuestions;
     // Create the Response document
     const newResponse = new this.responseModel({
       user_id,
@@ -85,26 +92,29 @@ export class ResponsesService {
     return await newResponse.save();
   }
 
-  private async updateUserGPA(user_id: ObjectId, normalizedScore: number): Promise<void> {
-    const user = await this.userModel.findById(user_id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${user_id} not found`);
+  private async updateUserGPA(userId: string, normalizedScore: number): Promise<void> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      const currentGPA = user.gpa || 0;
+      const gpaImpact = (normalizedScore - 0.5) * 2;
+      const newGPA = Math.max(0, Math.min(4.0, currentGPA + gpaImpact));
+
+      user.gpa = newGPA;
+      await user.save();
+
+      // Emit the GPA update through the websocket
+      this.responseGateway.sendGpaUpdate(userId, newGPA);
+    } catch (error) {
+      console.error('Error updating GPA:', error);
+      throw error;
     }
-  
-    // Example GPA adjustment logic (scale GPA to a max of 4.0)
-    const currentGPA = user.gpa || 0;
-    
-    // Calculate the impact of the quiz on GPA
-    const gpaImpact = (normalizedScore - 0.5) * 2; 
-    // `normalizedScore - 0.5`: A score of 50% has no impact. Above increases GPA, below decreases GPA.
-    // Multiply by a factor (2 here) to scale the impact.
-  
-    const newGPA = Math.max(0, Math.min(currentGPA + gpaImpact, 4.0)); // Ensure GPA is between 0 and 4.0
-  
-    // Update the user's GPA in the database
-    user.gpa = newGPA;
-    await user.save();
   }
+  
+  
   
   
 

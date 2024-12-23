@@ -25,7 +25,7 @@ export class ModulesController {
             }
         }),
         fileFilter: (req: any, file: any, cb: FileFilterCallback) => {
-            if (file.mimetype.match(/\/(jpg|jpeg|png|gif|pdf|csv|xlsx|pptx)$/)) {
+            if (file.mimetype.match(/\/(jpg|jpeg|png|gif|pdf|csv|xlsx|pptx|mp4)$/)) {
                 cb(null, true); // Accept file
             } else {
                 cb(null, false); // Reject file
