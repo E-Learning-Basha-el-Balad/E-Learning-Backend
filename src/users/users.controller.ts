@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Role, User } from '../Schemas/users.schema';
 import { Types } from 'mongoose';
@@ -21,12 +21,11 @@ export class UsersController {
   }
 @UseGuards(AuthGuard,RolesGuard)
 @Roles(Role.Student, Role.Instructor)
-  @Put(':id/name')
+  @Put('/editname')
   async updateUserName(
-    @Param('id') userId: string,
-    @Body('name') newName: string,
+    @Body('name') newName: string, @Req() req: any
   ): Promise<User> {
-    const objectId = new Types.ObjectId(userId);
+    const objectId = new Types.ObjectId(req.user.sub);
     return this.usersService.updateUserName(objectId, newName);
   }
 }
