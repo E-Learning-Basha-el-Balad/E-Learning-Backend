@@ -6,10 +6,11 @@ import { QuestionBank, QuestionBankSchema } from 'src/Schemas/questionBank.schem
 import { Quiz, QuizSchema } from 'src/Schemas/quizzes.schema';
 import { User, UserSchema } from 'src/Schemas/users.schema';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LogsModule } from 'src/logging/logs.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),],
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),LogsModule],
   providers: [UsersService],
   controllers: [UsersController],
   exports: [MongooseModule,UsersService]
