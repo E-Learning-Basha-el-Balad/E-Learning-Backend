@@ -12,7 +12,7 @@ async function bootstrap() {
 
  
   app.enableCors({
-    origin: 'http://localhost:3000', // Your frontend URL
+    origin: 'http://localhost:3001', // Your frontend URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -25,6 +25,5 @@ async function bootstrap() {
     origin: 'http://localhost:3001',
     credentials: true});
   await app.listen(process.env.PORT ?? 3000);
-
 }
 bootstrap();

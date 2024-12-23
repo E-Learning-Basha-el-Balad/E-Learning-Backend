@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { QuizzesService } from './quizzes.service';
 import { Quiz } from '../Schemas/quizzes.schema';
 import { createQuizzesDTo } from './quizzesDto/createQuizzes.dto';
 import { updateQuizzesDTo } from './quizzesDto/updateQuizzes.dto';
 import { QuestionBank } from 'src/Schemas/questionBank.schema';
 import { ObjectId } from 'mongoose';
+import { AuthGuard } from '../auth/auth.guard'
 
 @Controller('quizzes')
 export class QuizzesController {
@@ -12,6 +13,7 @@ export class QuizzesController {
 
   // Create a new quiz
   @Post()
+  @UseGuards(AuthGuard)
   async createQuiz(@Body() quizData: createQuizzesDTo): Promise<Quiz> {
     return await this.quizzesService.create(quizData);
   }
@@ -30,6 +32,12 @@ export class QuizzesController {
  ): Promise<QuestionBank[]> {
    return await this.quizzesService.findByUserId(user_id, quiz_id);
  }
+
+ @Get('m/module/:module_id')
+async getQuizByModuleId(@Param('module_id') module_id: string): Promise<Quiz> {
+  return await this.quizzesService.findByModuleId(module_id);
+}
+
 
 
 // Get a quiz by quiz ID
