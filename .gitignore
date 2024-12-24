@@ -59,3 +59,4 @@ src/Schemas/responses.schema.ts
 src/Schemas/responses.schema.ts
 src/Schemas/responses.schema.ts
 src/Schemas/responses.schema.ts
+src/questionBank/questionDto/createQuestionDto.dto.ts
