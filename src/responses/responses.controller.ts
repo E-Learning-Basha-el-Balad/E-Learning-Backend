@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Param, Body, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Put, Delete, UseGuards, Req } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
 import { createResponseDto } from './responsesDto/createResponse.dto';
 import { updateResponseDto } from './responsesDto/updateResponse.dto';
 import { Response } from '../Schemas/responses.schema';
+import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../role/role.guard';
+import { Roles } from '../role/role.decorator';
+import { Role } from '../Schemas/users.schema';
+
 
 @Controller('responses')
 export class ResponsesController {
@@ -27,9 +32,11 @@ export class ResponsesController {
   }
 
   // Get all responses for a specific user
-  @Get('user/:user_id')
-  async findByUser(@Param('user_id') user_id: string): Promise<Response[]> {
-    return await this.responsesService.findResponsesByUser(user_id);
+  @Get('user/responses')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Student)
+  async findByUser(@Req() req: any): Promise<Response[]> {
+    return await this.responsesService.findResponsesByUser(req.user.sub);
   }
 
   // Delete a response by ID

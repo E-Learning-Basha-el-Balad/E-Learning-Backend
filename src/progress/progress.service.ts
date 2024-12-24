@@ -191,7 +191,7 @@ export class ProgressService {
     //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     async getAverageScores(instructorId: string): Promise<any[]> {
-        const courses = await this.courseModel.find({ created_by: instructorId }).exec();
+        const courses = await this.courseModel.find({ userId: instructorId }).exec();
         const coursesJSON = JSON.parse(JSON.stringify(courses));
         const coursesArray = coursesJSON.map(course => [course.title, course._id]);
     
@@ -232,9 +232,7 @@ export class ProgressService {
             const averageScore = sum / scores.length;
             averageScores.push({ course: course[0], avg: averageScore });
         }
-    
-        console.log(averageScores);
-    
+            
         return averageScores;
     }
     
@@ -277,14 +275,12 @@ export class ProgressService {
         const averageScore = sum / scores.length;
 
         const report = {
-            "Number of enrolled students": {
-                "Total": studentsCount,
-                "Below Average": enrolledBelowAvg,
-                "Average": enrolledAvg,
-                "Above Average": enrolledAboveAvg
-            },
-            "Number of students who completed the course": completionCount,
-            "Average Score": averageScore
+            "Total": studentsCount,
+            "Below_Average": enrolledBelowAvg,
+            "Average": enrolledAvg,
+            "Above_Average": enrolledAboveAvg,
+            "numCompleted": completionCount,
+            "averageScore": averageScore
         }
 
         return report;
@@ -311,6 +307,23 @@ export class ProgressService {
             averageRating: averageRating
         }
 
+        return response;
+    }
+
+    async getModuleRatings(courseId: string): Promise<any> {
+        const modules = await this.moduleModel.find({ course_id: courseId }).exec();
+        const modulesJSON = JSON.parse(JSON.stringify(modules));
+        const moduleIds = modulesJSON.map(module => module._id);
+        const response = await Promise.all(
+            moduleIds.map(async (module) => {
+                const ratings = await this.ratingModel.find({ module_id: module }).exec();
+                const ratingsJSON = JSON.parse(JSON.stringify(ratings));
+                const scores = ratingsJSON.map(rating => rating.rating);
+                const sum = scores.reduce((acc, cur) => acc = acc + cur, 0);
+                const averageRating = sum/scores.length;
+               return { module_id: module, module_rating: averageRating };
+            })
+        );
         return response;
     }
 }

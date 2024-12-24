@@ -9,6 +9,8 @@ import { User, UserSchema } from '../Schemas/users.schema';
 import { QuizzesService } from 'src/quizzes/quizzes.service';
 import { ModuleSchema } from 'src/Schemas/modules.schema';
 import { ResponseGateway } from './responses.gateway';
+import { LogsModule } from 'src/logging/logs.module';
+
 
 // Define QuizzesService here if it's tightly coupled
 
@@ -22,6 +24,7 @@ import { ResponseGateway } from './responses.gateway';
       { name: 'Module', schema: ModuleSchema },
       
     ]),
+    LogsModule
   ],
   controllers: [ResponsesController],
   providers: [ResponsesService, QuizzesService, ResponseGateway], // Add QuizzesService here
