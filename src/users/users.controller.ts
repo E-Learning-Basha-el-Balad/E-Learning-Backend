@@ -1,29 +1,40 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get,Put, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { CreateUserDTO } from './CreateUser.dto';
 import { UsersService } from './users.service';
 import {Role, User,UserDocument} from '../Schemas/users.schema'
 import { LoginUserDTO } from './loginUser.dto';
-import mongoose, { Model, ObjectId } from 'mongoose';
+import mongoose, { Model, ObjectId,Types } from 'mongoose';
 import { AuthGuard } from '../auth/auth.guard';
 import { Roles } from '../role/role.decorator';
 import { RolesGuard } from '../role/role.guard';
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get('students')
+  async getStudents() {
+    return this.usersService.getStudents();
+  }
+
+
+  @Get('instructors')
+  async getInstructors() {
+    return this.usersService.getInstructors();
+  }
 
 
 
-@Get('students')
-async getStudents(){
-    return this.usersService.getStudents()
-}
-
-
-@Get('instructors')
-async getInstructors(){
-    return this.usersService.getInstructors()
-}
+  
+@UseGuards(AuthGuard,RolesGuard)
+@Roles(Role.Student, Role.Instructor)
+  @Put('/editname')
+  async updateUserName(
+    @Body('name') newName: string, @Req() req: any
+  ): Promise<User> {
+    const objectId = new Types.ObjectId(req.user.sub);
+    return this.usersService.updateUserName(objectId, newName);
+  }
 
 @Delete('deletemyself')
 @UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard

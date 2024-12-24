@@ -25,6 +25,16 @@ export class UsersService {
     
     return user
   }
+  async updateUserName(userId: Types.ObjectId, newName: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.name = newName;
+    return user.save();
+  }
   async getUserById(id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:id})
     
@@ -40,8 +50,24 @@ export class UsersService {
 
 
   async getStudents(){
-    return await this.userModel.find({role:"student"},{setActive:true})
+    return await this.userModel.aggregate([
+      {
+        $match: { 
+          role: 'student', 
+          setActive: true 
+        }
+      },
+      {
+        $lookup: {
+          from: 'courses', 
+          localField: 'enrolledCourses', 
+          foreignField: '_id', 
+          as: 'courses' 
+        }
+      }
+    ]);
   }
+  
 
   async getInstructors(){
 
@@ -51,10 +77,10 @@ export class UsersService {
       },
       {
         $lookup: {
-          from: 'courses', // the collection to join with
-          localField: '_id', // field in Users collection
-          foreignField: 'userId', // field in Courses collection
-          as: 'courses' // the name of the resulting array
+          from: 'courses', 
+          localField: '_id', 
+          foreignField: 'userId', 
+          as: 'courses' 
         }
       }
     ]);

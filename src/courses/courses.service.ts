@@ -169,7 +169,7 @@ return course[0]
   }
 
   async inviteStudent(email:string,courseId:string){
-
+    this.logger.log("FUNC HIT EMAIL"+email)
     const user = await this.userModel.findOne({email:email})
 
     if(!user){
@@ -208,9 +208,7 @@ return course[0]
     // return await this.courseModel.find({ isAvailable: true });
     return await this.courseModel.aggregate([
       {
-      $match: {
-        isAvailable: true
-      }
+        $match: { isAvailable: true } 
       },
       {
       $lookup: {
@@ -322,15 +320,51 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
   }
 
   // PUT Methods
-  async updateCourse(id: string, updateCourseDto: UpdateCourseDto, userId: string): Promise<Course> {
+  async updateCourse(courseId: string, updateCourse: any, userId: string): Promise<Course> {
     await this.validateInstructor(userId);
 
-    const course = await this.courseModel.findById(id).exec();
+    const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException('Course not found');
     }
 
-    return this.courseModel.findByIdAndUpdate(id, { $set: updateCourseDto }, { new: true }).exec();
+    if(String(course.userId) != userId){
+      throw new UnauthorizedException('THIS COURSE IS NOT MADE BY THIS INSTRUCTOR')
+
+    }
+
+
+    const new_course = new this.courseModel({
+      ...course.toObject(),
+      ...updateCourse
+      
+          
+    });
+
+    
+
+
+
+
+    new_course.versionNumber =course.versionNumber+1
+   course.isAvailable = false
+   new_course.isAvailable = true
+    this.logger.log(updateCourse)
+   this.logger.log("NEW"+new_course)
+    this.logger.log("OLD"+course)
+
+
+   await course.save()
+
+   new_course._id = undefined;
+
+   
+   return  await new_course.save(); 
+
+   
+
+
+
   }
 
   // DELETE Methods
@@ -347,6 +381,8 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     const updatedCourse = await course.save();
     return updatedCourse;
   }
+
+
 
   // Helper Methods
    async validateInstructor(userId: string): Promise<User> {
@@ -374,6 +410,7 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     }
     return user;
   }
+
   async addKeyword(courseId:mongoose.Schema.Types.ObjectId, keyword:string, instructorId:mongoose.Schema.Types.ObjectId) {
     const course = await this.courseModel.findById(courseId).exec();
 
@@ -389,4 +426,11 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     }
     return course;
   }
+
+
+
+
 }
+
+
+

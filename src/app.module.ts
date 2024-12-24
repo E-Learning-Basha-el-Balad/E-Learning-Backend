@@ -30,7 +30,7 @@ const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
     QuestionBankModule,
     ServeStaticModule.forRoot({
       rootPath: path.join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads', // URL path to access files
+      serveRoot: '/uploads',
     }),
   ],
  
