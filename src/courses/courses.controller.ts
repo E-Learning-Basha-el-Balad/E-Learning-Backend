@@ -7,10 +7,9 @@ import { Course, DifficultyLevel } from '../Schemas/courses.schema';
 import { Role, User } from '../Schemas/users.schema';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AuthGuard } from '../auth/auth.guard'
-import { RolesGuard } from 'src/role/role.guard';
 import mongoose from 'mongoose';
-import { Roles } from 'src/role/role.decorator';
-
+import { Roles } from '../role/role.decorator';
+import { RolesGuard } from '../role/role.guard';
 
 @Controller('courses')
 export class CoursesController {
@@ -20,7 +19,8 @@ export class CoursesController {
     private versioningService: VersioningService,
   ) {}
 
-
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Instructor)
   @Post('invite')
   async invite(@Body('courseId') courseId :string,@Body('email') email:string){
     this.logger.log(email)
@@ -30,7 +30,8 @@ export class CoursesController {
   }
 
   @Post('create')
-  @UseGuards(AuthGuard) // Protect the route with AuthGuard
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Instructor)
   async createCourse(@Req() req: any, @Body() createCourseDto: CreateCourseDto) {
       const instructorId = req.user.sub; // Extract `sub` from JWT payload
       return await this.coursesService.createCourse(instructorId, createCourseDto);
@@ -47,23 +48,24 @@ export class CoursesController {
   async searchCoursesByTitle(@Query('title') title: string): Promise<Course[]> {
     return this.coursesService.searchCoursesByTitle(title);
   }
-
+ 
   @Get('Allcourses')
   async getAllCourses(): Promise<Course[]> {
     return this.coursesService.getAllCourses();
   }
+  
   @UseGuards(AuthGuard)
   @Get('mycourses')
   async getCoursesForInsructor(@Req() req:any) {
     
     return this.coursesService.getCoursesForInstructor(req.user.sub);
   }
-
+  @UseGuards(AuthGuard)
   @Get('search')
   async searchCourses(@Body('title') title?: string,@Body('category') category?: string,@Body('level') level?: DifficultyLevel): Promise<Course[]> {
     return this.coursesService.searchCourses({ title, category, level });
   }
-
+  @UseGuards(AuthGuard)
   @Get('instructor/:instructorId/:courseId/students')
   async getStudentsByInstructor(
     @Param('instructorId') instructorId: string,
@@ -71,7 +73,7 @@ export class CoursesController {
   ): Promise<User[]> {
     return this.coursesService.getStudentsByInstructor(instructorId, courseId);
   }
-
+  @UseGuards(AuthGuard)
   @Get('students/:studentId/:courseId/instructors')
   async getInstructorsByStudent(
     @Param('studentId') studentId: string,
@@ -79,17 +81,17 @@ export class CoursesController {
   ): Promise<User> {
     return this.coursesService.getInstructorByStudent(studentId, courseId);
   }
-
+  @UseGuards(AuthGuard)
   @Get(':id')
   async getCourse(@Param('id') courseId: string) : Promise<Course[]> {
     return this.coursesService.getCourse(courseId);
   }
-
+  
   @Get('enrolled/:studentId')
   async getEnrolledCourses(@Param('studentId') studentId: string): Promise<Course[]> {
     return this.coursesService.getEnrolledCourses(studentId);
   }
-
+  
   @Get('enrolled/student/:instructorId/:studentId')
   async getStudentEnrolledCourses(
     @Param('instructorId') instructorId: string,
@@ -97,9 +99,8 @@ export class CoursesController {
   ): Promise<Course[]> {
     return this.coursesService.getStudentEnrolledCourses(instructorId, studentId);
   }
-
-
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Instructor)
   @Put(':id')
   async updateCourse(
     @Param('id') courseId: string,
@@ -108,7 +109,8 @@ export class CoursesController {
   ): Promise<Course> {
     return this.coursesService.updateCourse(courseId, updateCourseDto, req.user.sub);
   }
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Instructor,Role.Admin)
   @Delete('delete')
   async deleteCourse(
     @Body('courseId') courseId: string,
@@ -116,8 +118,8 @@ export class CoursesController {
   ): Promise<Course> {
     return this.coursesService.deleteCourse(courseId, req.user.sub);
   }
-
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Instructor)
   @Post('keyword/:id')
   async addKeywords(
     @Param('id') courseId: mongoose.Schema.Types.ObjectId,
@@ -127,9 +129,3 @@ export class CoursesController {
     return this.coursesService.addKeyword(courseId, keyword, req.user.sub);
   }
 }
-
-
-
-
-
-

@@ -71,12 +71,12 @@ export class DiscussionsService {
     }
 
     // Instructor
-    async deletePostInstructor(postId: string, instructorId: string): Promise<PostDocument> {
+    async deletePostInstructor(postId: string, userId: string): Promise<PostDocument> {
 
         const post = await this.postModel.findById(postId);
 
         // Checks if the ID entered is the ID of the course instructor
-        if (post.course.instructorId.toString() == instructorId) {
+        if (post.course.userId.toString() == userId) {
             return this.postModel.findByIdAndDelete(postId);
         }
 

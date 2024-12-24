@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Put, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get,Put, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { CreateUserDTO } from './CreateUser.dto';
 import { UsersService } from './users.service';
-import { Role, User } from '../Schemas/users.schema';
-import { Types } from 'mongoose';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { RolesGuard } from 'src/role/role.guard';
-import { Roles } from 'src/role/role.decorator';
+import {Role, User,UserDocument} from '../Schemas/users.schema'
+import { LoginUserDTO } from './loginUser.dto';
+import mongoose, { Model, ObjectId,Types } from 'mongoose';
+import { AuthGuard } from '../auth/auth.guard';
+import { Roles } from '../role/role.decorator';
+import { RolesGuard } from '../role/role.guard';
 
 @Controller('users')
 export class UsersController {
@@ -15,10 +17,15 @@ export class UsersController {
     return this.usersService.getStudents();
   }
 
+
   @Get('instructors')
   async getInstructors() {
     return this.usersService.getInstructors();
   }
+
+
+
+  
 @UseGuards(AuthGuard,RolesGuard)
 @Roles(Role.Student, Role.Instructor)
   @Put('/editname')
@@ -28,4 +35,17 @@ export class UsersController {
     const objectId = new Types.ObjectId(req.user.sub);
     return this.usersService.updateUserName(objectId, newName);
   }
+
+@Delete('deletemyself')
+@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+@Roles(Role.Student) // Allow Admin, Instructor, and Student roles
+async DeleteMyself(@Req() req: any): Promise<User> {
+  return await this.usersService.DeleteMyself(req.user.sub);
+}
+@Delete('deleteuser')
+@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+@Roles(Role.Admin)
+async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User> {
+  return await this.usersService.deleteUser(req.user.sub,userId);
+}
 }

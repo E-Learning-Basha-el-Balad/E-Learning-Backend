@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Note extends Document {
@@ -10,10 +10,10 @@ export class Note extends Document {
   content: string;
 
   @Prop({ required: true })
-  studentId: string; // Reference to the user
+  studentId: mongoose.Schema.Types.ObjectId; // Reference to the user
 
   @Prop({ required: true })
-  moduleId: string; // Reference to the module
+  moduleId: mongoose.Schema.Types.ObjectId; // Reference to the module
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note);
