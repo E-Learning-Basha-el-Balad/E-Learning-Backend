@@ -11,6 +11,7 @@ import { ModuleSchema } from 'src/Schemas/modules.schema';
 import { ResponseGateway } from './responses.gateway';
 import { LogsModule } from 'src/logging/logs.module';
 
+
 // Define QuizzesService here if it's tightly coupled
 
 @Module({
@@ -22,7 +23,8 @@ import { LogsModule } from 'src/logging/logs.module';
       { name: User.name, schema: UserSchema },
       { name: 'Module', schema: ModuleSchema },
       
-    ]),LogsModule
+    ]),
+    LogsModule
   ],
   controllers: [ResponsesController],
   providers: [ResponsesService, QuizzesService, ResponseGateway], // Add QuizzesService here

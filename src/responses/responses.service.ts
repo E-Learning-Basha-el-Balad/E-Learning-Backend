@@ -147,11 +147,15 @@ export class ResponsesService {
    * Retrieve all responses for a specific user
    */
   async findResponsesByUser(user_id: string): Promise<Response[]> {
-    const responses = await this.responseModel.find({ user_id }).populate('quiz_id');
+    const responses = await this.responseModel.find({ user_id }).exec();
     if (responses.length === 0) {
       throw new NotFoundException(`No responses found for User ID ${user_id}`);
     }
-    return responses;
+    const responsesJSON = JSON.parse(JSON.stringify(responses)); 
+    const scores = responsesJSON.map((response: { quiz_id: string, score: number }) => ({ quiz_id: response.quiz_id, score: response.score }));
+    console.log(scores);
+
+    return scores;
   }
 
   /**

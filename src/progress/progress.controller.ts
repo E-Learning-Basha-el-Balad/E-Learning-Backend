@@ -78,8 +78,10 @@ export class ProgressController {
         return await this.progressService.rateModule(req.user.sub, moduleId, rating);
     }
 
+    //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
+
     @Get('/course-rating')
-    @Roles(Role.Student)
+    @Roles(Role.Instructor)
     async getCourseRatings(@Query('courseId') courseId: string) {
         const response = await this.progressService.getCourseRatings(courseId);
         if(response === null) {
@@ -87,8 +89,6 @@ export class ProgressController {
         }
         return response;
     }
-
-    //////////////////////////////////////  INSTRUCTOR APIS //////////////////////////////////////
 
     @Get('averageScore/instructor')
     @Roles(Role.Instructor)
@@ -108,6 +108,16 @@ export class ProgressController {
             throw new HttpException('No report was found for this course', HttpStatus.NOT_FOUND);
         }
         return report;
+    }
+
+    @Get('/moduleRatings')
+    @Roles(Role.Instructor)
+    async getModuleRatings(@Query('courseId') moduleId: string){
+        const ratings = await this.progressService.getModuleRatings(moduleId);
+        if(ratings === null){
+            throw new HttpException('No ratings found for this module', HttpStatus.NOT_FOUND);
+        }
+        return ratings
     }
 
 }
