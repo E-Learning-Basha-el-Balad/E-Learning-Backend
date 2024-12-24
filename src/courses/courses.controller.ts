@@ -1,16 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query,Req, Res, BadRequestException, NotFoundException , UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query,Req, Res, BadRequestException, NotFoundException,Logger , UseGuards } from '@nestjs/common';
 import { VersioningService } from './versioning/versioning.service';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { Course, DifficultyLevel } from '../Schemas/courses.schema';
-import { User } from '../Schemas/users.schema';
+import { Role, User } from '../Schemas/users.schema';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AuthGuard } from '../auth/auth.guard'
+import { RolesGuard } from 'src/role/role.guard';
 import mongoose from 'mongoose';
+import { Roles } from 'src/role/role.decorator';
+
 
 @Controller('courses')
 export class CoursesController {
+  private readonly logger = new Logger(CoursesController.name);
   constructor(
     private coursesService: CoursesService,
     private versioningService: VersioningService,
@@ -19,6 +23,9 @@ export class CoursesController {
 
   @Post('invite')
   async invite(@Body('courseId') courseId :string,@Body('email') email:string){
+    this.logger.log(email)
+    this.logger.log(courseId)
+
     return this.coursesService.inviteStudent(email,courseId)
   }
 
@@ -91,13 +98,15 @@ export class CoursesController {
     return this.coursesService.getStudentEnrolledCourses(instructorId, studentId);
   }
 
+
+  @UseGuards(AuthGuard)
   @Put(':id')
   async updateCourse(
     @Param('id') courseId: string,
-    @Body() updateCourseDto: UpdateCourseDto,
-    @Query('instructorId') instructorId: string
+    @Body() updateCourseDto: any,
+    @Req() req:any
   ): Promise<Course> {
-    return this.coursesService.updateCourse(courseId, updateCourseDto, instructorId);
+    return this.coursesService.updateCourse(courseId, updateCourseDto, req.user.sub);
   }
   @UseGuards(AuthGuard)
   @Delete('delete')
@@ -107,4 +116,20 @@ export class CoursesController {
   ): Promise<Course> {
     return this.coursesService.deleteCourse(courseId, req.user.sub);
   }
+
+  @UseGuards(AuthGuard)
+  @Post('keyword/:id')
+  async addKeywords(
+    @Param('id') courseId: mongoose.Schema.Types.ObjectId,
+    @Body('keyword') keyword: string,
+    @Req() req:any
+  ): Promise<Course> {
+    return this.coursesService.addKeyword(courseId, keyword, req.user.sub);
+  }
 }
+
+
+
+
+
+

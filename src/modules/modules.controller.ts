@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Delete, Param, Body, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Param, Body, UseInterceptors, UploadedFile, UploadedFiles,Logger } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express, Multer } from 'multer';
 import { diskStorage, FileFilterCallback } from 'multer';
@@ -13,6 +13,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 // Controller for handling module routes
 @Controller('courses/:courseId/modules')
 export class ModulesController {
+    private readonly logger = new Logger(ModulesController.name);
     constructor(private readonly modulesService: ModulesService) {}
 
     // Multer configuration for file upload
@@ -41,6 +42,7 @@ export class ModulesController {
         @Body() body,
         @UploadedFiles() files: Express.Multer.File[]
     ): Promise<CourseModule> {
+        this.logger.log(files)
         const filePaths = files.map(file => file.path);
         return this.modulesService.createModule(courseId, body.title, body.content, body.resources, filePaths, body.uploadedBy);
     }
@@ -75,15 +77,17 @@ export class ModulesController {
     }
 
     //update module
+    
     @Put(':moduleId')
-    @UseInterceptors(FileInterceptor('file', ModulesController.multerOptions))
+    @UseInterceptors(FilesInterceptor('files', 10, ModulesController.multerOptions))
     async updateModule(
-        @Param('courseId') courseId: string,
         @Param('moduleId') moduleId: string,
         @Body() body,
-        @UploadedFile() file: Express.Multer.File
+        @UploadedFiles() files: Express.Multer.File[]
     ): Promise<CourseModule> {
-        return this.modulesService.updateModule(moduleId, body.title, body.content, body.resources, file?.path);
+        this.logger.log(files)
+        const filePaths = files?.map(file => file.path);
+        return this.modulesService.updateModule(moduleId, body.title, body.content, body.resources, filePaths);
     }
 
 
@@ -94,6 +98,24 @@ export class ModulesController {
         @Param('moduleId') moduleId: string
     ): Promise<CourseModule> {
         return this.modulesService.deleteModule(moduleId);
+    }
+
+    @Delete(':moduleId/files')
+    async deleteModuleFile(
+        @Param('courseId') courseId: string,
+        @Param('moduleId') moduleId: string,
+        @Body('deleted') deleted:string[]
+    ) {
+        return this.modulesService.deleteModuleFile(moduleId,deleted);
+    }
+
+    @Post(':moduleId/flag')
+    async flagModule(
+        @Param('moduleId') moduleId: string,
+        @Body('flag') flag:boolean
+    ) {
+        this.logger.log("FLAG FUNC HIT")
+        return this.modulesService.flagModule(moduleId,flag);
     }
 
 
