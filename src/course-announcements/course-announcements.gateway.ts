@@ -12,6 +12,9 @@ import { CourseAnnouncementsService } from './course-announcements.service';
 import { CreateCourseAnnouncementDto } from './dto/create-course-announcement.dto';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ValidateIdDto } from 'src/discussions/dto/validate-id-dto';
+import { CourseAnnouncement, CourseAnnouncementDocument } from './schema/course-announcement.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 // ANY ACTION CREATION/DELETION IS RESTRICTED TO INSTRUCTORS ONLY
 
@@ -39,7 +42,10 @@ export class CourseAnnouncementsGateway implements OnGatewayConnection, OnGatewa
   private readonly logger = new Logger(CourseAnnouncementsGateway.name);
 
   // Injecting the announcements service to handle the business logic
-  constructor(private readonly announcementsService: CourseAnnouncementsService) {}
+  constructor(private readonly announcementsService: CourseAnnouncementsService,
+    @InjectModel(CourseAnnouncement.name) private announcementModel: Model<CourseAnnouncementDocument>, 
+    
+  ) {}
 
 
   // CONNECT/DISCONNECT EVENTS
@@ -65,11 +71,16 @@ export class CourseAnnouncementsGateway implements OnGatewayConnection, OnGatewa
 
       // Handle the creation logic from the service
       const announcement = await this.announcementsService.createAnnouncement(payload);
+      
+      
+      // Populate Course Details
+      const populatedAnnouncement = await this.announcementModel.findById(announcement).populate('course').exec();
+      const courseName = populatedAnnouncement.course.title;
 
       // Emit the created post to the corresponding course room of the post creator
       this.server.to(`course_${payload.course}`).emit('announcement:created', announcement);
 
-      client.to(`course_${payload.course}`).emit('notification', { message: `Announcement created in course_${payload.course}`, data: announcement.content });
+     client.to(`course_${payload.course}`).emit('notification', { message: `New course announcement created in ${courseName}`, data: announcement.content });
 
       // Log the event for debugging
       this.logger.log(`Announcement created in course_${payload.course}`);

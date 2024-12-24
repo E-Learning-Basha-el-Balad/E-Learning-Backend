@@ -11,8 +11,11 @@ import { Server, Socket } from 'socket.io';
 import { DiscussionsService } from './discussions.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, UseGuards } from '@nestjs/common';
 import { ValidateIdDto } from './dto/validate-id-dto';
+import { RolesGuard } from 'src/role/role.guard';
+import { Roles } from 'src/role/role.decorator';
+import { Role } from 'src/Schemas/users.schema';
 
 /*
   This gateway is responsible for handling the Discussion Forum for courses.
@@ -74,13 +77,9 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // POST EVENTS
 
-  /*
-  MAMDOUH:
-  WE SHOULD USE GUARDS FOR POST CREATION TO CHECK THE ROLE OF THE USER
-  ONLY STUDENTS CAN CREATE POSTS 
-  */
-
   // Listen for new post creation
+  // @UseGuards(RolesGuard)
+  // @Roles(Role.Student,Role.Instructor)
   @SubscribeMessage('post:create')
   async handleCreatePost(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreatePostDto) {
     try {
@@ -103,18 +102,17 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  //***
-
-  /*
-   MAMDOUH:
-   WE SHOULD USE GUARDS FOR POST DELETION TO CHECK THE ROLE OF THE USER
-  */
-
+  
   // Listen for post deletion
+  // @UseGuards(RolesGuard)
+  // @Roles(Role.Student,Role.Instructor,Role.Admin)
   @SubscribeMessage('post:delete')
-  //@UseGuards(RolesGuard) (SHOULD USE A GUARD TO CHECK THE ROLE OF THE USER) (MAMDOOOOOO)
   async handleDeletePost(@ConnectedSocket() client: Socket, @MessageBody() { postId, role, userId }: { postId: string, role: string, userId: string }) {
     try {
+
+      console.log("post id entered is "+ postId);
+      console.log("role entered is "+ role);
+      console.log("user id entered is "+ userId);
 
       // Check the role of the user and call the corresponding service method
       let post;
@@ -138,6 +136,7 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
       }
 
+      this.logger.log('Post Course' + post.course);
       // Emit the deleted post to the corresponding course room of the post creator
       this.server.to(`course_${post.course}`).emit('post:deleted', post);
 
@@ -154,15 +153,9 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
   //COMMENT EVENTS
 
-  //***
-
-  /*
-  MAMDOUH:
-  WE SHOULD USE GUARDS FOR COMMENT CREATION TO CHECK THE ROLE OF THE USER
- (BOTH STUDENTS AND INSTRUCTORS CAN CREATE COMMENTS)
-  */
-
   // Listen for new comment creation
+  // @UseGuards(RolesGuard)
+  // @Roles(Role.Student,Role.Instructor)
   @SubscribeMessage('comment:create')
   async handleCreateComment(@ConnectedSocket() client: Socket, @MessageBody(new ValidationPipe()) payload: CreateCommentDto) {
     try {
@@ -181,7 +174,7 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
 
       // Emit the notification only if the comment author is not the post author
       if(comment.author.toString() !== post.author.toString())
-        {this.server.to(`user_${post.author}`).emit('notification', { message: 'You have a new reply to your post', data: post.title });}
+        {this.server.to(`user_${post.author}`).emit('notification', { message: 'You have a new reply to your post!', data: post.title });}
     
       
      this.logger.log(`Post author: ${post.author.toString()}`);
@@ -192,15 +185,10 @@ export class DiscussionsGateway implements OnGatewayConnection, OnGatewayDisconn
       client.emit('comment:create:error', { message: 'Failed to create comment', details: error.message });
     }
   }
-
-  //*** 
    
-  /*
-   MAMDOUH:
-   WE SHOULD USE GUARDS FOR COMMENT DELETION TO CHECK THE ROLE OF THE USER
-  */
-
   // Listen for comment deletion
+  // @UseGuards(RolesGuard)
+  // @Roles(Role.Student,Role.Instructor,Role.Admin)
   @SubscribeMessage('comment:delete')
   async handleDeleteComment(@ConnectedSocket() client: Socket, @MessageBody() { commentId, role, userId }: { commentId: string, role: string, userId: string }) {
     try {

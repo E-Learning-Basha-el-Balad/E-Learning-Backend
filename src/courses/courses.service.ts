@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException,Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model, Types, ObjectId } from 'mongoose';
 import mongoose from 'mongoose';
 import { Course, CourseDocument, DifficultyLevel } from '../Schemas/courses.schema';
 import { User,UserDocument } from '../Schemas/users.schema';
@@ -428,6 +428,16 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     }
     return user;
   }
+
+  
+ //ADDED THIS TO GET ALL COURSES MADE BY AN INSTRUCTOR
+ async getInstructorCourses(instructorId: string): Promise<Course[]> {
+  this.logger.log(`Querying courses for instructorId: ${instructorId}`);
+  const objectId = new Types.ObjectId(instructorId);
+  const courses = await this.courseModel.find({ userId: objectId }).exec();
+  this.logger.log(`Found courses: ${JSON.stringify(courses)}`);
+  return courses;
+}
 
   async addKeyword(courseId:mongoose.Schema.Types.ObjectId, keyword:string, instructorId:mongoose.Schema.Types.ObjectId) {
     const course = await this.courseModel.findById(courseId).exec();
