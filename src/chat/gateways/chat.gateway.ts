@@ -33,8 +33,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
     }
 
-    // @Roles(Role.Student, Role.Instructor)
-    // @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Student, Role.Instructor)
+    @UseGuards(AuthGuard, RolesGuard)
     @SubscribeMessage('newMessage')
     async handleNewMessage(@MessageBody() message : MessageDto){
         const success : unknown = await this.chatService.createMessage(message);
@@ -42,8 +42,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.emit('message-reply', success);
     }
     
-    // @Roles(Role.Student, Role.Instructor)
-    // @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Student, Role.Instructor)
+    @UseGuards(AuthGuard, RolesGuard)
     @SubscribeMessage('getChat')
     async handelGetChat(client : Socket, @MessageBody() chat : any){
         try{
@@ -55,8 +55,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    // @Roles(Role.Student, Role.Instructor)
-    // @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Student, Role.Instructor)
+    @UseGuards(AuthGuard, RolesGuard)
     @SubscribeMessage('createGroup')
     async handleCreateGroup(client : Socket, groupChatDto : GroupChatDto){
         try{
@@ -70,8 +70,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    // @Roles(Role.Student, Role.Instructor)
-    // @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Student, Role.Instructor)
+    @UseGuards(AuthGuard, RolesGuard)
     @SubscribeMessage('myChats')
     async getMyChats(client: Socket, userId : any){
         try{
@@ -83,8 +83,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    // @Roles(Role.Student, Role.Instructor)
-    // @UseGuards(AuthGuard, RolesGuard)
+    @Roles(Role.Student, Role.Instructor)
+    @UseGuards(AuthGuard, RolesGuard)
     @SubscribeMessage('browseUsers')
     async getAllUsers(client: Socket){
         try{
