@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query,Req, Res, BadRequestException, NotFoundException , UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query,Req, Res, BadRequestException, NotFoundException,Logger , UseGuards } from '@nestjs/common';
 import { VersioningService } from './versioning/versioning.service';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -13,6 +13,7 @@ import { RolesGuard } from '../role/role.guard';
 
 @Controller('courses')
 export class CoursesController {
+  private readonly logger = new Logger(CoursesController.name);
   constructor(
     private coursesService: CoursesService,
     private versioningService: VersioningService,
@@ -22,6 +23,9 @@ export class CoursesController {
   @Roles(Role.Instructor)
   @Post('invite')
   async invite(@Body('courseId') courseId :string,@Body('email') email:string){
+    this.logger.log(email)
+    this.logger.log(courseId)
+
     return this.coursesService.inviteStudent(email,courseId)
   }
   @UseGuards(AuthGuard,RolesGuard)
@@ -90,6 +94,8 @@ export class CoursesController {
   ): Promise<User> {
     return this.coursesService.getInstructorByStudent(studentId, courseId);
   }
+
+
   @UseGuards(AuthGuard)
   @Get(':id')
   async getCourse(@Param('id') courseId: string) : Promise<Course[]> {
@@ -98,6 +104,7 @@ export class CoursesController {
   
   @Get('enrolled/:studentId')
   async getEnrolledCourses(@Param('studentId') studentId: string): Promise<Course[]> {
+    this.logger.log(studentId)
     return this.coursesService.getEnrolledCourses(studentId);
   }
   
@@ -113,10 +120,10 @@ export class CoursesController {
   @Put(':id')
   async updateCourse(
     @Param('id') courseId: string,
-    @Body() updateCourseDto: UpdateCourseDto,
-    @Query('instructorId') instructorId: string
+    @Body() updateCourseDto: any,
+    @Req() req:any
   ): Promise<Course> {
-    return this.coursesService.updateCourse(courseId, updateCourseDto, instructorId);
+    return this.coursesService.updateCourse(courseId, updateCourseDto, req.user.sub);
   }
   @UseGuards(AuthGuard,RolesGuard)
   @Roles(Role.Instructor,Role.Admin)

@@ -18,12 +18,13 @@ import { ChatModule } from './chat/chat.module';
 import { QuestionBankModule } from './questionBank/questionBank.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
+import { LogsModule } from './logging/logs.module';
 import { ScheduleModule } from '@nestjs/schedule';
 const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
 
 
 @Module({
-  imports: [UserModule, CoursesModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
+  imports: [UserModule, CoursesModule, LogsModule, ModulesModule, QuizzesModule, ResponsesModule, ProgressModule,
   MongooseModule.forRoot(uri),
   
   DiscussionsModule,
@@ -32,7 +33,7 @@ const uri:string="mongodb://127.0.0.1:27017/e-learning_db"
     QuestionBankModule,
     ServeStaticModule.forRoot({
       rootPath: path.join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads', // URL path to access files
+      serveRoot: '/uploads',
     }),
     ScheduleModule.forRoot()
   ],

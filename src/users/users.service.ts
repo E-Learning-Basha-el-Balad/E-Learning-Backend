@@ -68,7 +68,10 @@ export class UsersService {
     return await this.userModel.find({role:"student"},{setActive:true})
     return await this.userModel.aggregate([
       {
-        $match: { role: 'student' } 
+        $match: { 
+          role: 'student', 
+          setActive: true 
+        }
       },
       {
         $lookup: {
