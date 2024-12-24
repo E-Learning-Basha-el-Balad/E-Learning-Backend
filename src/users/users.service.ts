@@ -65,7 +65,6 @@ export class UsersService {
     return user;
 }
   async getStudents(){
-    return await this.userModel.find({role:"student"},{setActive:true})
     return await this.userModel.aggregate([
       {
         $match: { 

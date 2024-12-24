@@ -48,7 +48,7 @@ export class CoursesController {
   }
   
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Student, Role.Admin)
+  @Roles(Role.Instructor, Role.Admin,Role.Student)
   @Post('enroll')
   async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
     const { courseId} = enrollDto;
