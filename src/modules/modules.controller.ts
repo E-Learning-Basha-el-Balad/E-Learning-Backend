@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Put, Delete, Param, Body, UseInterceptors,UseGuards, UploadedFile, UploadedFiles,Logger } from '@nestjs/common';
+import { LogsModule } from 'src/logging/logs.module';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express, Multer } from 'multer';
 import { diskStorage, FileFilterCallback } from 'multer';
