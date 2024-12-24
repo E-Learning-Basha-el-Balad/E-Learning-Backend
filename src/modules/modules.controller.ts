@@ -64,11 +64,12 @@ export class ModulesController {
         @Param('courseId') courseId: string,
         @Param('moduleId') moduleId: string
     ): Promise<CourseModule> {
+        this.logger.log("HIT")
         return this.modulesService.getModuleById(moduleId);
     }
 
-    @UseGuards(AuthGuard,RolesGuard)
-    @Roles(Role.Instructor)
+    @UseGuards(AuthGuard)
+    //@Roles(Role.Instructor)
     @Get()
     async getModules(
         @Param('courseId') courseId: string

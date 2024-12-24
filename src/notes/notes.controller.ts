@@ -1,21 +1,25 @@
-  import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Put } from '@nestjs/common';
+  import { Controller, Post, Get,Req, Patch, Delete, Body, Param, UseGuards, Put,Logger } from '@nestjs/common';
   import { NotesService } from './notes.service';
   import { CreateNoteDto } from './dto/create-note.dto';
   import { UpdateNoteDto } from './dto/update-note.dto';
   import { AutoSaveDto } from './dto/autosave-note.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
   @Controller('notes')
   export class NotesController {
+    private readonly logger = new Logger(NotesService.name);
     constructor(private readonly notesService: NotesService) {}
-
+   @UseGuards(AuthGuard)
     @Post()
-    create(@Body() createNoteDto: CreateNoteDto) {
-      return this.notesService.create(createNoteDto);
+    create(@Body() body: any,@Req() req:any) {
+      this.logger.log(body)
+      this.logger.log(req.user.sub)
+      return this.notesService.create(body.title, body.content,body.moduleId,req.user.sub);
     }
-
-    @Get(':studentId/:moduleId')
-    findAll(@Param('studentId') studentId: string, @Param('moduleId') moduleId: string) {
-      return this.notesService.findAll(studentId, moduleId);
+    @UseGuards(AuthGuard)
+    @Get('/:moduleId')
+    findAll( @Param('moduleId') moduleId: string , @Req() req :any) {
+      return this.notesService.findAll(req.user.sub, moduleId);
     }
     @Get(':noteId')
     findOne(@Param('noteId') noteId: string) {

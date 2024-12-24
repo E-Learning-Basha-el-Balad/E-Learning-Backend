@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException,Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Note } from '../Schemas/notes.schema';
@@ -8,10 +8,11 @@ import { AutoSaveDto } from './dto/autosave-note.dto';
 
 @Injectable()
 export class NotesService {
+   private readonly logger = new Logger(NotesService.name);
   constructor(@InjectModel(Note.name) private noteModel: Model<Note>) {}
 
-  async create(createNoteDto: CreateNoteDto): Promise<Note> {
-    const note = new this.noteModel(createNoteDto);
+  async create(title:any,notebody:any,moduleId:any,userID:any ): Promise<Note> {
+    const note = new this.noteModel({title:title,content:notebody,studentId:userID,moduleId:moduleId});
     return note.save();
   }
 

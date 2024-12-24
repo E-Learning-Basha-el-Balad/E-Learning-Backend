@@ -81,6 +81,8 @@ export class CoursesController {
   ): Promise<User> {
     return this.coursesService.getInstructorByStudent(studentId, courseId);
   }
+
+
   @UseGuards(AuthGuard)
   @Get(':id')
   async getCourse(@Param('id') courseId: string) : Promise<Course[]> {
@@ -89,6 +91,7 @@ export class CoursesController {
   
   @Get('enrolled/:studentId')
   async getEnrolledCourses(@Param('studentId') studentId: string): Promise<Course[]> {
+    this.logger.log(studentId)
     return this.coursesService.getEnrolledCourses(studentId);
   }
   
