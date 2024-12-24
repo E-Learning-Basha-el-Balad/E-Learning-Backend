@@ -27,7 +27,7 @@ export class User {
   @Prop({ required: true, enum: Role })
   role: Role;
   
-  @Prop({required:true})
+  @Prop({})
   gpa: number;
 
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Course', default: [] })

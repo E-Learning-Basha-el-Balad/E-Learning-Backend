@@ -36,7 +36,7 @@ export class AuthService {
       this.logger.log(`User Logged successfully with ID: ${user._id}`);
       res.status(200).json({
         message: 'Login successful',
-        userId: user._id,
+        user
     });
     }
       catch(err){
