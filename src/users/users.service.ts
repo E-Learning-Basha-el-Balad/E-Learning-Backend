@@ -1,18 +1,21 @@
-import { Injectable, UnauthorizedException,Logger,NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException,Logger,NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from '../Schemas/users.schema';
+import { Role, User, UserDocument } from '../Schemas/users.schema';
 import mongoose, { Model, ObjectId } from 'mongoose';
 import { CreateUserDTO} from './CreateUser.dto';
 import { LoginUserDTO } from './loginUser.dto';
 import { ConflictException } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { Course, CourseDocument } from '../Schemas/courses.schema';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {}
+    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
+    
+  ) {} 
   async getUserByEmail(email:string):Promise<User | null>{
     const user = await this.userModel.findOne({email:email})
     
@@ -21,6 +24,16 @@ export class UsersService {
     }
     
     return user
+  }
+  async updateUserName(userId: Types.ObjectId, newName: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.name = newName;
+    return user.save();
   }
   async getUserById(id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:id})
@@ -37,8 +50,24 @@ export class UsersService {
 
 
   async getStudents(){
-    return await this.userModel.find({role:"student"})
+    return await this.userModel.aggregate([
+      {
+        $match: { 
+          role: 'student', 
+          setActive: true 
+        }
+      },
+      {
+        $lookup: {
+          from: 'courses', 
+          localField: 'enrolledCourses', 
+          foreignField: '_id', 
+          as: 'courses' 
+        }
+      }
+    ]);
   }
+  
 
   async getInstructors(){
 
@@ -48,21 +77,15 @@ export class UsersService {
       },
       {
         $lookup: {
-          from: 'courses', // the collection to join with
-          localField: '_id', // field in Users collection
-          foreignField: 'userId', // field in Courses collection
-          as: 'courses' // the name of the resulting array
+          from: 'courses', 
+          localField: '_id', 
+          foreignField: 'userId', 
+          as: 'courses' 
         }
       }
     ]);
 
   }
-
-  
-
-  
-
-  
 
   async register(userData: CreateUserDTO): Promise<UserDocument> {
     try{
@@ -77,10 +100,37 @@ export class UsersService {
       throw err;
 
     }
-      
-      
+  }
+  async DeleteMyself(id:ObjectId):Promise<User>{
+    const user = await this.userModel.findOne({_id:id})
+    if (!user){
+      throw new NotFoundException('User not found')
     }
+    // if(user.role=='instructor'){
+    //   const course= await this.courseModel.findOne({userId:id})
+    //   // if(course.students.length>0){
+    //   //   throw new ForbiddenException('Cannot delete instructor with students enrolled')
+    //   // }
+    // }
+    user.setActive = false
+    const deletedUser = await user.save()
+    return deletedUser
   }
 
-
-
+  async deleteUser(idadmin:ObjectId,id:ObjectId):Promise<User>{
+    const user = await this.userModel.findOne({_id:idadmin})
+    if (!user){
+      throw new NotFoundException('User not found')
+    }
+    const user2=await this.userModel.findOne({_id:id})
+    if(!user2){
+      throw new NotFoundException("student/instructor not found")
+    }
+    if(idadmin==id){
+      throw new ForbiddenException('Admin cannot delete himself ')
+    }
+    user2.setActive=false
+    const deletedUser=await user2.save()
+    return deletedUser
+  }
+}

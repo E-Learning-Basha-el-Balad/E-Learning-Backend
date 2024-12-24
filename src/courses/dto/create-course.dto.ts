@@ -20,7 +20,4 @@ export class CreateCourseDto {
   @IsNotEmpty()
   @IsEnum(DifficultyLevel)
   level: DifficultyLevel;
-
-
-
 }

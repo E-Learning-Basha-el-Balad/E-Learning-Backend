@@ -6,9 +6,14 @@ export class createQuizzesDTo {
     @IsNotEmpty()
     module_id: string;
 
-    @IsArray()
-    @IsNotEmpty({ each: true })
-    questions: QuestionBank[];
+   
+    questionsA: QuestionBank[];
+
+    
+    questionsB: QuestionBank[];
+
+   
+    questionsC: QuestionBank[];
 
     @IsNumber()
     numOfQuestions: number;

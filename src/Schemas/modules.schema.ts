@@ -18,8 +18,8 @@ export class Module {
   @Prop()
   filePath: string[];
 
-  //@Prop()
-  //file: Express.Multer.File;
+  @Prop({default: false})
+  outdated: boolean;
 
   @Prop({ type: [String] })
   resources: string[];

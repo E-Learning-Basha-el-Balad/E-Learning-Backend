@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Put, Delete, Param, Body, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Param, Body, UseInterceptors,UseGuards, UploadedFile, UploadedFiles,Logger } from '@nestjs/common';
+import { LogsModule } from 'src/logging/logs.module';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express, Multer } from 'multer';
 import { diskStorage, FileFilterCallback } from 'multer';
@@ -8,11 +9,17 @@ import { ModulesService } from './modules.service';
 import { Module as CourseModule } from '../Schemas/modules.schema';
 import NodeModule from 'module';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Roles } from '../role/role.decorator';
+import { RolesGuard } from '../role/role.guard';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { Role, User } from '../Schemas/users.schema';
+
 
 
 // Controller for handling module routes
 @Controller('courses/:courseId/modules')
 export class ModulesController {
+    private readonly logger = new Logger(ModulesController.name);
     constructor(private readonly modulesService: ModulesService) {}
 
     // Multer configuration for file upload
@@ -34,6 +41,8 @@ export class ModulesController {
         limits: { fileSize: 5 * 1024 * 1024 } // 5 MB file size limit
     };
 
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
     @Post()
     @UseInterceptors(FilesInterceptor('files', 10, ModulesController.multerOptions)) // 'files' is the form data key, 10 is the max number of files
     async createModule(
@@ -41,23 +50,15 @@ export class ModulesController {
         @Body() body,
         @UploadedFiles() files: Express.Multer.File[]
     ): Promise<CourseModule> {
+        this.logger.log(files)
         const filePaths = files.map(file => file.path);
         return this.modulesService.createModule(courseId, body.title, body.content, body.resources, filePaths, body.uploadedBy);
     }
 
-/*
-    @Post()
-    @UseInterceptors(FileInterceptor('file', ModulesController.multerOptions))
-    async createModule(
-        @Param('courseId') courseId: string,
-        @Body() body,
-        @UploadedFile() file: Express.Multer.File
-    ): Promise<CourseModule> {
-        return this.modulesService.createModule(courseId, body.title, body.content, body.resources, file?.path, body.uploadedBy);
-    }
-*/
 
-    //get module by id
+
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
     @Get(':moduleId')
     async getModule(
         @Param('courseId') courseId: string,
@@ -66,7 +67,8 @@ export class ModulesController {
         return this.modulesService.getModuleById(moduleId);
     }
 
-    //get all modules of a course
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
     @Get()
     async getModules(
         @Param('courseId') courseId: string
@@ -74,20 +76,25 @@ export class ModulesController {
         return this.modulesService.getModulesByCourse(courseId);
     }
 
-    //update module
+  
+
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
     @Put(':moduleId')
-    @UseInterceptors(FileInterceptor('file', ModulesController.multerOptions))
+    @UseInterceptors(FilesInterceptor('files', 10, ModulesController.multerOptions))
     async updateModule(
-        @Param('courseId') courseId: string,
         @Param('moduleId') moduleId: string,
         @Body() body,
-        @UploadedFile() file: Express.Multer.File
+        @UploadedFiles() files: Express.Multer.File[]
     ): Promise<CourseModule> {
-        return this.modulesService.updateModule(moduleId, body.title, body.content, body.resources, file?.path);
+        this.logger.log(files)
+        const filePaths = files?.map(file => file.path);
+        return this.modulesService.updateModule(moduleId, body.title, body.content, body.resources, filePaths);
     }
 
 
-    //delete module
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
     @Delete(':moduleId')
     async deleteModule(
         @Param('courseId') courseId: string,
@@ -97,10 +104,40 @@ export class ModulesController {
     }
 
 
-    //get all modules
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
+    @Delete(':moduleId/files')
+    async deleteModuleFile(
+        @Param('courseId') courseId: string,
+        @Param('moduleId') moduleId: string,
+        @Body('deleted') deleted:string[]
+    ) {
+        return this.modulesService.deleteModuleFile(moduleId,deleted);
+    }
+
+
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles(Role.Instructor)
+    @Post(':moduleId/flag')
+    async flagModule(
+        @Param('moduleId') moduleId: string,
+        @Body('flag') flag:boolean
+    ) {
+        this.logger.log("FLAG FUNC HIT")
+        return this.modulesService.flagModule(moduleId,flag);
+    }
+
+
+ 
     @Get()
     async getAllModules(): Promise<CourseModule[]> {
         return this.modulesService.getAllModules();
+    }
+
+    // New endpoint to get module by ID without requiring courseId
+    @Get('/:moduleId')
+    async getModuleById(@Param('moduleId') moduleId: string): Promise<CourseModule> {
+        return this.modulesService.getModuleById(moduleId);
     }
 
 }

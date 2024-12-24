@@ -36,6 +36,9 @@ export class User {
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Course', default: [] })
   createdCourses: mongoose.Schema.Types.ObjectId[];
 
+  @Prop({default:true})
+  setActive:boolean;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

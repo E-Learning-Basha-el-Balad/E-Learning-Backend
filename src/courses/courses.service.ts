@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, InternalServerErrorException,Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import mongoose from 'mongoose';
 import { Course, CourseDocument, DifficultyLevel } from '../Schemas/courses.schema';
 import { User,UserDocument } from '../Schemas/users.schema';
@@ -20,13 +20,17 @@ export class CoursesService {
 
   // POST Methods
   async createCourse(userId: string, createCourseDto: CreateCourseDto) {
+    const user= await this.userModel.findById(userId)
+    if(user.role !== 'instructor'){
+      return new Error("you are not an instructor")
+    }
     if (!userId) {
       throw new Error('Instructor ID is required but missing.');
     }
-  
+    
     const { title, description, category, level } = createCourseDto;
   
-    // Check for duplicate courses
+    
     const existingCourse = await this.courseModel.findOne({ title: title.toLowerCase().trim(), userId });
     if (existingCourse) {
       throw new ConflictException(`Course with title "${title}" already exists for this instructor.`);
@@ -165,7 +169,7 @@ return course[0]
   }
 
   async inviteStudent(email:string,courseId:string){
-
+    this.logger.log("FUNC HIT EMAIL"+email)
     const user = await this.userModel.findOne({email:email})
 
     if(!user){
@@ -202,14 +206,19 @@ return course[0]
 
   async getAllCourses(): Promise<Course[]> {
     // return await this.courseModel.find({ isAvailable: true });
-    return await this.courseModel.aggregate([{
+    return await this.courseModel.aggregate([
+      {
+        $match: { isAvailable: true } 
+      },
+      {
       $lookup: {
         from: 'users', // the collection to join with
         localField: 'userId', // field in Courses collection
         foreignField: '_id', // field in Users collection
         as: 'instructor_details' // the name of the resulting array
       }
-  }]);
+      }
+    ]);
 }
 async searchCoursesByTitle(title: string): Promise<Course[]> {
   if (!title || title.length < 2) {
@@ -311,29 +320,69 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
   }
 
   // PUT Methods
-  async updateCourse(id: string, updateCourseDto: UpdateCourseDto, userId: string): Promise<Course> {
+  async updateCourse(courseId: string, updateCourse: any, userId: string): Promise<Course> {
     await this.validateInstructor(userId);
 
-    const course = await this.courseModel.findById(id).exec();
+    const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException('Course not found');
     }
 
-    return this.courseModel.findByIdAndUpdate(id, { $set: updateCourseDto }, { new: true }).exec();
+    if(String(course.userId) != userId){
+      throw new UnauthorizedException('THIS COURSE IS NOT MADE BY THIS INSTRUCTOR')
+
+    }
+
+
+    const new_course = new this.courseModel({
+      ...course.toObject(),
+      ...updateCourse
+      
+          
+    });
+
+    
+
+
+
+
+    new_course.versionNumber =course.versionNumber+1
+   course.isAvailable = false
+   new_course.isAvailable = true
+    this.logger.log(updateCourse)
+   this.logger.log("NEW"+new_course)
+    this.logger.log("OLD"+course)
+
+
+   await course.save()
+
+   new_course._id = undefined;
+
+   
+   return  await new_course.save(); 
+
+   
+
+
+
   }
 
   // DELETE Methods
-  async deleteCourse(courseId: string, instructorId: string): Promise<Course> {
+  async deleteCourse(courseId: string, instructorId: ObjectId): Promise<Course> {
     const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
     }
-
-
+    const user=await this.userModel.findOne({_id:instructorId})
+    if (course.userId != instructorId && user.role!= 'admin' ) {
+      throw new ForbiddenException('Only the instructor who created this course can delete it');
+    }
     course.isAvailable = false;
     const updatedCourse = await course.save();
     return updatedCourse;
   }
+
+
 
   // Helper Methods
    async validateInstructor(userId: string): Promise<User> {
@@ -361,4 +410,27 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     }
     return user;
   }
+
+  async addKeyword(courseId:mongoose.Schema.Types.ObjectId, keyword:string, instructorId:mongoose.Schema.Types.ObjectId) {
+    const course = await this.courseModel.findById(courseId).exec();
+
+    if (!course) {
+      throw new NotFoundException(`Course with ID "${courseId}" not found`);
+    }
+    if(course.userId != instructorId){
+      throw new ForbiddenException('Only the instructor who created this course can add keywords');
+    }
+    if (!course.keywords.includes(keyword)) {
+      course.keywords.push(keyword);
+      await course.save();
+    }
+    return course;
+  }
+
+
+
+
 }
+
+
+

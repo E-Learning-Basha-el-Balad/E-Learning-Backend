@@ -45,8 +45,8 @@ export class Course {
   @Prop({ default: true })
   isAvailable: boolean;
   
-  @Prop({default:true})
+  @Prop({default:[]})
   keywords: string[]
-    instructorId: any;
+    
 }
 export const CourseSchema = SchemaFactory.createForClass(Course);

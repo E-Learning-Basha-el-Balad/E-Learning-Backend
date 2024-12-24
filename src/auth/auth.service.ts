@@ -19,12 +19,13 @@ export class AuthService {
     async authenticateLogin(loginCreds: LoginUserDTO, res: Response) {
       try{
         const user = await this.UsersService.getUserByEmail(loginCreds.email);
-        
+        if(user.setActive==false){
+          throw new NotFoundException('User does not exist');
+        }
         if (!user || !(await bcrypt.compare(loginCreds.password, user.password))) {
             await this.logsService.logFailedLogin(loginCreds.email);
             throw new UnauthorizedException('Invalid credentials');
         }
-
         const token = await this.genToken(user);
         res.cookie('jwt', token, {
           httpOnly: false,
@@ -33,6 +34,7 @@ export class AuthService {
           sameSite: 'lax',
       });
 
+
       this.logger.log(`User Logged successfully with ID: ${user._id}`);
       res.status(200).json({
         message: 'Login successful',
@@ -40,11 +42,14 @@ export class AuthService {
     });
     }
       catch(err){
-
+        if (err instanceof NotFoundException) {
+          res.status(401).json({ message: 'User does not exist' });
+        } else
         this.logger.error(`Login Error: ${err.message}`);
         res.status(401).json({ message: 'Invalid credentials' });
 
       }
+
     }
 
 
