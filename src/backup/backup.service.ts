@@ -1,52 +1,47 @@
-
-
-
-//rough draft
-//still not connected to the db for backing up
-//find out who will backup and when to backup (connection string)
-
-//ADD DOTENV FILE
-
-
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { exec } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-
+import { promisify } from 'util';
+const execPromise = promisify(exec);
 @Injectable()
 export class BackupService {
   private readonly logger = new Logger(BackupService.name);
+  private backupDir: string;
 
-  @Cron('0 0 * * *') // Backs up at 12:00 AM daily
-  async handleBackup() {
+  constructor() {
+    this.backupDir = path.join(process.cwd(), 'AlpineAcademy_backup');
+    this.ensureBackupDirectory();
+  }
+
+  private ensureBackupDirectory() {
+    if (!fs.existsSync(this.backupDir)) {
+      fs.mkdirSync(this.backupDir, { recursive: true });
+    }
+  }
+
+  @Cron('0 0 * * *') // Backs up at 12 AM daily
+  private async createBackup() {
     try {
-      const backupDir = path.resolve(__dirname, '../backups');
-      const date = new Date().toISOString().split('T')[0];
+      const outputDir = path.join(this.backupDir, `AlpineAcademy_backup_${new Date().toISOString().replace(/[:.]/g, '-')}`);
+      const mongoUri = "mongodb://127.0.0.1:27017/e-learning_db";
 
-      // Ensure the backup directory exists
-      if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir, { recursive: true });
+      if (!mongoUri) {
+        throw new Error('Invalid mongo URI');
       }
 
-      // Use environment variables for sensitive information
-      const dbUri = process.env.MONGODB_URI;
-      if (!dbUri) {
-        throw new Error('MONGODB_URI environment variable is not set');
+      const command = `mongodump --uri="${mongoUri}" --out="${outputDir}"`;
+
+      const { stdout, stderr } = await execPromise(command);
+
+      if (stderr) {
+        this.logger.warn(`Backup completed with warnings: ${stderr}`);
+      } else {
+        this.logger.log(`Successful backup!: ${stdout}`);
       }
-
-      const command = `mongodump --uri="${dbUri}" --out=${backupDir}/${date}`;
-
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          this.logger.error(`Backup failed: ${error.message}`);
-          this.logger.error(stderr);
-        } else {
-          this.logger.log(`Backup completed: ${stdout}`);
-        }
-      });
     } catch (error) {
-      this.logger.error(`Backup process encountered an error: ${error.message}`);
+      this.logger.error(`Backup failed: ${error.message}`);
     }
   }
 }

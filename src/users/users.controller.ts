@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { CreateUserDTO } from './CreateUser.dto';
 import { UsersService } from './users.service';
 import { Role, User } from '../Schemas/users.schema';
-import { Types } from 'mongoose';
+import { mongo, ObjectId, Types } from 'mongoose';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/role/role.guard';
 import { Roles } from 'src/role/role.decorator';
 
+@UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -16,30 +17,40 @@ export class UsersController {
     return this.usersService.getStudents();
   }
 
-
+  @UseGuards(RolesGuard)
+  @Roles(Role.Instructor,Role.Student, Role.Admin)
+  @Get()
+  async getMe(userId:ObjectId): Promise<User> {
+    return await this.usersService.getUser(userId);
+  }
   @Get('instructors')
   async getInstructors() {
     return this.usersService.getInstructors();
   }
-@UseGuards(AuthGuard,RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(Role.Student, Role.Instructor)
-  @Put(':id/name')
+@Put('/editname')
   async updateUserName(
-    @Param('id') userId: string,
-    @Body('name') newName: string,
+    @Body('name') newName: string, @Req() req: any
   ): Promise<User> {
-    const objectId = new Types.ObjectId(userId);
+    const objectId = new Types.ObjectId(req.user.sub);
     return this.usersService.updateUserName(objectId, newName);
   }
-}
-@Delete('deletemyself')
-@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
-@Roles(Role.Student) // Allow Admin, Instructor, and Student roles
+@UseGuards(RolesGuard)
+@Roles(Role.Student)
+  @Delete('deletemyself')
 async DeleteMyself(@Req() req: any): Promise<User> {
   return await this.usersService.DeleteMyself(req.user.sub);
 }
+
 @Delete('deleteuser')
-@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+@UseGuards(RolesGuard)  // Apply AuthGuard and RolesGuard
 @Roles(Role.Admin)
 async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User> {
+  const user = await this.usersService.getUserById(userId);
+  // if(user.setActive==false){
+  //   throw new UnauthorizedException('User is already deleted')
+  // }
   return await this.usersService.deleteUser(req.user.sub,userId);
+}
+}

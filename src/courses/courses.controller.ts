@@ -7,7 +7,7 @@ import { Course, DifficultyLevel } from '../Schemas/courses.schema';
 import { Role, User } from '../Schemas/users.schema';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
 import { AuthGuard } from '../auth/auth.guard'
-import mongoose from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 import { Roles } from '../role/role.decorator';
 import { RolesGuard } from '../role/role.guard';
 
@@ -24,17 +24,27 @@ export class CoursesController {
   async invite(@Body('courseId') courseId :string,@Body('email') email:string){
     return this.coursesService.inviteStudent(email,courseId)
   }
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles(Role.Admin)
+  @Get('check')
+  async checkCourse( courseId: ObjectId): Promise<Course> {
+   
+
+    return await this.coursesService.checkCourse(courseId);
+
+    
+  }
 
   @Post('create')
   @UseGuards(AuthGuard,RolesGuard)
   @Roles(Role.Instructor)
   async createCourse(@Req() req: any, @Body() createCourseDto: CreateCourseDto) {
-      const instructorId = req.user.sub; // Extract `sub` from JWT payload
+      const instructorId = req.user.sub; 
       return await this.coursesService.createCourse(instructorId, createCourseDto);
   }
   
-  @UseGuards(AuthGuard)
-  
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Student, Role.Admin)
   @Post('enroll')
   async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
     const { courseId} = enrollDto;
@@ -51,13 +61,15 @@ export class CoursesController {
     return this.coursesService.getAllCourses();
   }
   
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Instructor, Role.Student)
   @Get('mycourses')
   async getCoursesForInsructor(@Req() req:any) {
     
     return this.coursesService.getCoursesForInstructor(req.user.sub);
   }
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Student, Role.Admin, Role.Instructor)
   @Get('search')
   async searchCourses(@Body('title') title?: string,@Body('category') category?: string,@Body('level') level?: DifficultyLevel): Promise<Course[]> {
     return this.coursesService.searchCourses({ title, category, level });

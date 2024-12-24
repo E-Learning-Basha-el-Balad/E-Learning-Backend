@@ -160,7 +160,22 @@ return course[0]
 
 
  
-     
+async checkCourse(courseId: ObjectId): Promise<Course> {
+  const course = await this.courseModel.findById(courseId).exec();
+  
+  // Check if the course exists
+  if (!course) {
+    throw new NotFoundException('Course not found');
+  }
+  
+  // Check if the course is available
+  if (course.isAvailable === false) {
+    throw new NotFoundException('Course is no longer available');
+  }
+
+  return course;
+}
+
   
 
   async getCoursesForInstructor(userId: string): Promise<Course[]> {
@@ -338,6 +353,9 @@ async searchCoursesByTitle(title: string): Promise<Course[]> {
     const course = await this.courseModel.findById(courseId).exec();
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found.`);
+    }
+    if(course.isAvailable===false){
+      throw new ForbiddenException('Course is already deleted');
     }
     const user=await this.userModel.findOne({_id:instructorId})
     if (course.userId != instructorId && user.role!= 'admin' ) {

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException,Logger,NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException,Logger,NotFoundException, ForbiddenException, UseGuards } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Role, User, UserDocument } from '../Schemas/users.schema';
 import mongoose, { Model, ObjectId } from 'mongoose';
@@ -7,6 +7,7 @@ import { LoginUserDTO } from './loginUser.dto';
 import { ConflictException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { Course, CourseDocument } from '../Schemas/courses.schema';
+
 
 @Injectable()
 export class UsersService {
@@ -25,6 +26,7 @@ export class UsersService {
     
     return user
   }
+  
   async updateUserName(userId: Types.ObjectId, newName: string): Promise<User> {
     const user = await this.userModel.findById(userId);
 
@@ -35,6 +37,7 @@ export class UsersService {
     user.name = newName;
     return user.save();
   }
+ 
   async getUserById(id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:id})
     
@@ -47,8 +50,20 @@ export class UsersService {
     
     return user
   }
-
-
+  
+  async getUser(userId: ObjectId): Promise<User> {
+    const user = await this.userModel.findById({ _id: userId });
+    if(!user){
+      throw new NotFoundException('User not found');
+    }
+    if(user.setActive===false){
+      throw new NotFoundException('User already deleted');
+    }
+    if(user.role=='instructor'){
+      throw new ForbiddenException('Cannot delete instructor');
+    }
+    return user;
+}
   async getStudents(){
     return await this.userModel.find({role:"student"},{setActive:true})
     return await this.userModel.aggregate([
@@ -100,6 +115,7 @@ export class UsersService {
 
     }
   }
+ 
   async DeleteMyself(id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:id})
     if (!user){
@@ -115,7 +131,7 @@ export class UsersService {
     const deletedUser = await user.save()
     return deletedUser
   }
-
+ 
   async deleteUser(idadmin:ObjectId,id:ObjectId):Promise<User>{
     const user = await this.userModel.findOne({_id:idadmin})
     if (!user){
@@ -125,8 +141,14 @@ export class UsersService {
     if(!user2){
       throw new NotFoundException("student/instructor not found")
     }
-    if(idadmin==id){
+     if(idadmin==id){
       throw new ForbiddenException('Admin cannot delete himself ')
+    }
+   if(user2.role=='instructor'){
+      throw new ForbiddenException('Cannot delete instructor')
+    }
+   if(user2.setActive===false){
+      throw new ForbiddenException('User already deleted')
     }
     user2.setActive=false
     const deletedUser=await user2.save()
