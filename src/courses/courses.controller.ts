@@ -34,7 +34,6 @@ export class CoursesController {
   }
   
   @UseGuards(AuthGuard)
-  
   @Post('enroll')
   async enrollStudent(@Body() enrollDto: EnrollStudentDto, @Req() req: any) {
     const { courseId} = enrollDto;
