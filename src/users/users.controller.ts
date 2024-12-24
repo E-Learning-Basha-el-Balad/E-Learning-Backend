@@ -7,15 +7,15 @@ import mongoose, { Model,mongo, ObjectId,Types } from 'mongoose';
 import { AuthGuard } from '../auth/auth.guard';
 import { Roles } from '../role/role.decorator';
 import { RolesGuard } from '../role/role.guard';
-=========
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { Role, User } from '../Schemas/users.schema';
-import { Types } from 'mongoose';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { RolesGuard } from 'src/role/role.guard';
-import { Roles } from 'src/role/role.decorator';
->>>>>>>>> Temporary merge branch 2
+
+// import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+// import { UsersService } from './users.service';
+// import { Role, User } from '../Schemas/users.schema';
+// import { Types } from 'mongoose';
+// import { AuthGuard } from 'src/auth/auth.guard';
+// import { RolesGuard } from 'src/role/role.guard';
+// import { Roles } from 'src/role/role.decorator';
+
 
 @UseGuards(AuthGuard)
 @Controller('users')
@@ -63,37 +63,26 @@ async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User
   // }
   return await this.usersService.deleteUser(req.user.sub,userId);
 }
-}
 
 
-  @Get('instructors')
-  async getInstructors() {
-    return this.usersService.getInstructors();
-  }
+
+ 
 
 
 
   
-@UseGuards(AuthGuard,RolesGuard)
-@Roles(Role.Student, Role.Instructor)
-  @Put('/editname')
-  async updateUserName(
-    @Body('name') newName: string, @Req() req: any
-  ): Promise<User> {
-    const objectId = new Types.ObjectId(req.user.sub);
-    return this.usersService.updateUserName(objectId, newName);
-  }
 
-@Delete('deletemyself')
-@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
-@Roles(Role.Student) // Allow Admin, Instructor, and Student roles
-async DeleteMyself(@Req() req: any): Promise<User> {
-  return await this.usersService.DeleteMyself(req.user.sub);
-}
-@Delete('deleteuser')
-@UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
-@Roles(Role.Admin)
-async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User> {
-  return await this.usersService.deleteUser(req.user.sub,userId);
-}
+
+// @Delete('deletemyself')
+// @UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+// @Roles(Role.Student) // Allow Admin, Instructor, and Student roles
+// async DeleteMyself(@Req() req: any): Promise<User> {
+//   return await this.usersService.DeleteMyself(req.user.sub);
+// }
+// @Delete('deleteuser')
+// @UseGuards(AuthGuard, RolesGuard)  // Apply AuthGuard and RolesGuard
+// @Roles(Role.Admin)
+// async deleteUser(@Req() req: any,@Body('userId') userId: ObjectId): Promise<User> {
+//   return await this.usersService.deleteUser(req.user.sub,userId);
+// }
 }
