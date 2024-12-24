@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, ObjectId } from 'mongoose';
 import { Response, ResponseDocument } from '../Schemas/responses.schema';
@@ -25,8 +25,8 @@ export class ResponsesService {
   /**
    * Create a new response for a quiz
    */
-  async createResponse(responseData: createResponseDto): Promise<Response> {
-    const { user_id, quiz_id, answers } = responseData;
+  async createResponse(user_id:ObjectId,responseData: createResponseDto): Promise<Response> {
+    const {  quiz_id, answers } = responseData;
     
     const user = await this.userModel.findById(user_id);
     // Fetch the user and their corresponding quiz questions by difficulty
@@ -121,10 +121,13 @@ export class ResponsesService {
   /**
    * Retrieve a response by ID
    */
-  async findResponseById(id: string): Promise<Response> {
+  async findResponseById(user_id: ObjectId,id: string): Promise<Response> {
     const response = await this.responseModel.findById(id).populate(['quiz_id', 'answers.question_id']);
     if (!response) {
       throw new NotFoundException(`Response with ID ${id} not found`);
+    }
+    if(response.user_id.toString() !== user_id.toString()){
+      throw new ForbiddenException('You are not authorized to access this response');
     }
     return response;
   }

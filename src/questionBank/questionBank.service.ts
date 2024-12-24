@@ -1,22 +1,28 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { QuestionBank, QuestionBankDocument } from '../Schemas/QuestionBank.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, ObjectId } from 'mongoose';
 import { Module } from 'src/Schemas/modules.schema';
 import { createQuestionsDTo } from './questionDto/createQuestionDto.dto';
 import { updateQuestionsDTo } from './questionDto/updateQuestionDto.dto';
+import { User } from 'src/Schemas/users.schema';
 @Injectable()
 export class QuestionBankService {
+  
   constructor(
     @InjectModel(QuestionBank.name) private questionBankModel: Model<QuestionBankDocument>,
-    @InjectModel(Module.name) private moduleModel: Model<Module>
+    @InjectModel(Module.name) private moduleModel: Model<Module>,
+    @InjectModel(User.name) private userModel: Model<User>
 
   ) {}
 
   // Create a question
-  async createQuestion(questionData: createQuestionsDTo): Promise<QuestionBank> {
+  async createQuestion(userId:ObjectId,questionData: createQuestionsDTo): Promise<QuestionBank> {
     const { type, options, correct_answer,module_id, difficulty, question_text } = questionData;
-
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
     const module = await this.moduleModel.findById(module_id);
     if (!module) {
       throw new NotFoundException(`Module with ID ${module_id} not found`);
@@ -71,12 +77,17 @@ export class QuestionBankService {
     return question;
   }
 
-  async findQuestionsByModuleId(module_id: string): Promise<QuestionBank[]> {
+  async findQuestionsByModuleId(userId:ObjectId,module_id: string): Promise<QuestionBank[]> {
     // Validate the provided module ID
     if (!mongoose.Types.ObjectId.isValid(module_id)) {
       throw new BadRequestException(`Invalid module ID: ${module_id}`);
     }
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
   
+
     // Find all questions related to the module
     const questions = await this.questionBankModel.find({ module_id });
   
@@ -94,8 +105,12 @@ export class QuestionBankService {
 }
 
   // Update a question
-  async updateQuestion(id: string, updateData: updateQuestionsDTo): Promise<QuestionBank> {
+  async updateQuestion(userId:ObjectId,id: string, updateData: updateQuestionsDTo): Promise<QuestionBank> {
     const { type, options, correct_answer,question_text } = updateData;
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
 
     if(question_text === ""){
       throw new BadRequestException(
@@ -135,7 +150,11 @@ export class QuestionBankService {
   }
 
   // Delete a question by ID
-  async delete(id: string): Promise<QuestionBank> {
+  async delete(userId:ObjectId,id: string): Promise<QuestionBank> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
     return await this.questionBankModel.findByIdAndDelete(id);  // Find and delete the question
 }
 }

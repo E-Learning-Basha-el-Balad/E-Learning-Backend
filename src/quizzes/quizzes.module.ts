@@ -6,6 +6,7 @@ import { Quiz, QuizSchema } from '../Schemas/quizzes.schema';
 import { QuestionBank, QuestionBankSchema } from '../Schemas/questionBank.schema';
 import { User, UserSchema } from '../Schemas/users.schema';
 import { ModuleSchema } from 'src/Schemas/modules.schema';
+import { LogsModule } from 'src/logging/logs.module';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ModuleSchema } from 'src/Schemas/modules.schema';
       { name: 'Module', schema: ModuleSchema },
       { name: QuestionBank.name, schema: QuestionBankSchema },
       { name: User.name, schema: UserSchema },
-    ]),
+    ]),LogsModule
   ],
   controllers: [QuizzesController],
   providers: [QuizzesService],
