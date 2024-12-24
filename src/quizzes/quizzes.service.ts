@@ -20,9 +20,12 @@ export class QuizzesService {
     console.log('QuizModel:', this.quizModel); }
 
   // Create a new quiz
-  async create(QuizData: createQuizzesDTo): Promise<Quiz> {
+  async create(user_id:ObjectId,QuizData: createQuizzesDTo): Promise<Quiz> {
     const { module_id, typeOfQuestions, numOfQuestions } = QuizData;
-
+    const user = await this.userModel.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
     // Ensure that the provided module_id exists
     const module = await this.moduleModel.findById(module_id);
     if (!module) {
@@ -157,14 +160,22 @@ export class QuizzesService {
   
   
   // Get all quizzes
-  async findAll(): Promise<Quiz[]> {
+  async findAll(user_id:ObjectId): Promise<Quiz[]> {
+    const user = await this.userModel.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
     let quizzes= await this.quizModel.find();  // Fetch all students from the database
     return quizzes
 }
 
   // Update a quiz by ID
-  async update(quizId: string, updateQuizData: updateQuizzesDTo): Promise<Quiz> {
+  async update(user_id:ObjectId,quizId: string, updateQuizData: updateQuizzesDTo): Promise<Quiz> {
     const { module_id, typeOfQuestions, numOfQuestions } = updateQuizData;
+    const user = await this.userModel.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
 
     // Find the quiz by ID
     const existingQuiz = await this.quizModel.findById(quizId);
@@ -213,7 +224,11 @@ export class QuizzesService {
   }
 
 
-  async findByModuleId(module_id: string): Promise<Quiz> {
+  async findByModuleId(user_id:ObjectId,module_id: string): Promise<Quiz> {
+    const user = await this.userModel.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
     // Ensure that the provided module_id is valid
     if (!mongoose.Types.ObjectId.isValid(module_id)) {
       throw new BadRequestException(`Invalid module ID: ${module_id}`);
@@ -235,7 +250,11 @@ export class QuizzesService {
   
 
   // Delete a quiz by ID
-  async delete(id: string): Promise<Quiz> {
+  async delete(user_id:ObjectId,id: string): Promise<Quiz> {
+    const user = await this.userModel.findById(user_id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
     return await this.quizModel.findByIdAndDelete(id);  // Find and delete the student
 }
 }

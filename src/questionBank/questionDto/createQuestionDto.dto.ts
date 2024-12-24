@@ -10,6 +10,7 @@ export class createQuestionsDTo {
     type: string;
 
    
+    @IsArray()
     options: string[];
 
     @IsString()
